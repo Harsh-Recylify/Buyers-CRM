@@ -1,0 +1,1041 @@
+# PROJECT NAME
+Recyclify Bidder Market
+
+# PROJECT DESCRIPTION
+
+Build a complete enterprise-grade SaaS CRM for Recyclify (Vozon Comsof Pvt. Ltd.).
+
+This is NOT a demo project.
+
+This must be a fully working production-ready CRM similar to Pipedrive, HubSpot and Monday.com.
+
+Every page, button, API, database action, form, permission, filter, notification and dashboard widget must be fully functional.
+
+The CRM will be used daily by my company to manage enterprise clients, IT Asset Disposal projects, E-Waste recycling, buyer bidding and internal team operations.
+
+The application must be scalable for:
+
+• 5+ Team Members
+• 10+ Managers
+• 500+ Buyers
+• 500+ Recyclers
+• 10,000+ Companies
+• 100,000+ Activities
+• Unlimited Bids
+
+Use clean enterprise architecture.
+
+------------------------------------------------------------
+
+COMPANY
+
+Company Name:
+Recyclify
+
+Software Name:
+Recyclify Bidder Market
+
+Use the uploaded Recyclify Logo throughout the application.
+
+Theme Colors
+
+Primary Green:
+#118847
+
+White
+
+Dark Gray
+
+Modern Professional UI
+
+Corporate Design
+
+------------------------------------------------------------
+
+TECH STACK
+
+Frontend
+
+Next.js
+
+React
+
+TypeScript
+
+TailwindCSS
+
+ShadCN UI
+
+React Query
+
+React Hook Form
+
+Zod Validation
+
+Recharts
+
+DND Kit
+
+Framer Motion
+
+Backend
+
+NodeJS
+
+Express
+
+Prisma ORM
+
+PostgreSQL
+
+JWT Authentication
+
+REST API
+
+Database
+
+PostgreSQL
+
+------------------------------------------------------------
+
+APPLICATION REQUIREMENTS
+
+Everything must be connected with PostgreSQL.
+
+No fake data.
+
+No dummy cards.
+
+No placeholder pages.
+
+No static dashboard.
+
+Everything should read and write live database data.
+
+Every module should work like a commercial CRM.
+
+------------------------------------------------------------
+
+AUTHENTICATION
+
+Create professional authentication.
+
+Login
+
+Signup
+
+Forgot Password
+
+Reset Password
+
+Remember Me
+
+Email Verification
+
+JWT Authentication
+
+Secure Session
+
+Profile Settings
+
+Change Password
+
+Role Based Access
+
+Future Ready for Two Factor Authentication
+
+------------------------------------------------------------
+
+DEFAULT SUPER ADMIN
+
+Automatically create Super Admin.
+
+Email
+
+harshjain@recyclify.in
+
+Role
+
+Super Admin
+
+This account cannot be deleted.
+
+Only Super Admin can create other Admins.
+
+------------------------------------------------------------
+
+USER ROLES
+
+Super Admin
+
+Complete access
+
+Admin
+
+Department Management
+
+Manager
+
+Manage assigned users
+
+Team Member
+
+Only assigned records
+
+------------------------------------------------------------
+
+ROLE PERMISSIONS
+
+SUPER ADMIN
+
+Everything
+
+Create Users
+
+Delete Users
+
+Edit Users
+
+Manage Roles
+
+Manage Permissions
+
+View Audit Logs
+
+View Login History
+
+Manage Pipeline
+
+Manage Dashboard
+
+Manage Buyers
+
+Manage Companies
+
+Manage Recyclers
+
+Manage Bids
+
+Export Reports
+
+Import Excel
+
+System Settings
+
+Backup Database
+
+Restore Data
+
+------------------------------------------------------------
+
+ADMIN
+
+Manage Companies
+
+Manage Buyers
+
+Manage Recyclers
+
+Manage Team
+
+Assign Companies
+
+Manage Pipeline
+
+Reports
+
+Dashboard
+
+Cannot edit Super Admin
+
+------------------------------------------------------------
+
+MANAGER
+
+Assigned Companies
+
+Assign Tasks
+
+Approve Quotes
+
+Manage Bids
+
+View Reports
+
+------------------------------------------------------------
+
+TEAM MEMBER
+
+Assigned Companies
+
+Assigned Buyers
+
+Assigned Tasks
+
+Assigned Bids
+
+Cannot Delete
+
+------------------------------------------------------------
+
+LEFT SIDEBAR
+
+Dashboard
+
+Companies
+
+Pipeline
+
+Buyers
+
+Recyclers
+
+Assets
+
+Bids
+
+Tasks
+
+Calendar
+
+Activities
+
+Reports
+
+Notifications
+
+Admin Panel
+
+Settings
+
+Profile
+
+------------------------------------------------------------
+
+DASHBOARD
+
+Professional dashboard similar to HubSpot.
+
+Live KPI Cards
+
+Today's Companies
+
+Today's Activities
+
+Today's Bids
+
+Monthly Companies
+
+Monthly Bids
+
+Active Buyers
+
+Active Recyclers
+
+Won Deals
+
+Lost Deals
+
+Open Deals
+
+Revenue
+
+Expected Revenue
+
+Charts
+
+Monthly Companies
+
+Monthly Bid Value
+
+Buyer Performance
+
+Pipeline Funnel
+
+Bid Status
+
+Top Buyers
+
+Top Managers
+
+Top Team Members
+
+Recent Activities
+
+Recent Companies
+
+Recent Bids
+
+Upcoming Follow Ups
+
+Notifications
+
+Everything should update live.
+
+------------------------------------------------------------
+
+COMPANIES MODULE
+
+Professional Company CRM.
+
+Functions
+
+Add Company
+
+Edit Company
+
+Delete Company
+
+Soft Delete
+
+Restore
+
+Archive
+
+Search
+
+Advanced Filters
+
+Sorting
+
+Pagination
+
+Bulk Edit
+
+Bulk Delete
+
+Import Excel
+
+Export Excel
+
+Fields
+
+Company Name
+
+Industry
+
+Website
+
+GST
+
+PAN
+
+Address
+
+State
+
+City
+
+Pincode
+
+Lead Source
+
+Company Owner
+
+Assigned Manager
+
+Current Stage
+
+Priority
+
+Expected Scrap Weight
+
+Expected Revenue
+
+Expected Pickup Date
+
+Notes
+
+Status
+
+Each Company should have
+
+Timeline
+
+Notes
+
+Activities
+
+Tasks
+
+Files
+
+Contacts
+
+Bid History
+
+Inspection Reports
+
+------------------------------------------------------------
+
+COMPANY STAGES
+
+New Lead
+
+Contacted
+
+Meeting Scheduled
+
+Site Inspection
+
+Quotation Sent
+
+Bid Open
+
+Negotiation
+
+Approved
+
+Pickup Scheduled
+
+Material Collected
+
+Completed
+
+Won
+
+Lost
+
+------------------------------------------------------------
+
+PIPELINE
+
+Professional Kanban Board.
+
+Drag and Drop.
+
+Moving cards automatically updates database.
+
+Each Card shows
+
+Company
+
+Owner
+
+Current Stage
+
+Expected Revenue
+
+Priority
+
+Last Activity
+
+Next Follow-up
+
+------------------------------------------------------------
+
+BUYERS MODULE
+
+Professional Buyer Management.
+
+Fields
+
+Buyer Name
+
+Company
+
+Phone
+
+Email
+
+GST
+
+PAN
+
+State
+
+City
+
+Address
+
+Material Categories
+
+CPU
+
+Laptop
+
+Desktop
+
+Server
+
+RAM
+
+HDD
+
+SSD
+
+Networking
+
+Battery
+
+PCB
+
+Printer
+
+Monitor
+
+Others
+
+Maximum Bid
+
+Preferred Materials
+
+Pickup States
+
+Payment Terms
+
+Rating
+
+Status
+
+Notes
+
+Documents
+
+------------------------------------------------------------
+
+RECYCLERS MODULE
+
+Recycler Database.
+
+Fields
+
+Recycler Name
+
+Company
+
+Phone
+
+Email
+
+GST
+
+CPCB Authorization
+
+SPCB Authorization
+
+Certificates
+
+Address
+
+Material Categories
+
+Capacity
+
+Pickup Area
+
+Payment Terms
+
+Documents
+
+Notes
+
+------------------------------------------------------------
+
+BIDS MODULE
+
+Most Important Module.
+
+Create Bid
+
+Assign Company
+
+Select Buyers
+
+Send RFQ
+
+Receive Quotes
+
+Compare Quotes
+
+Highest Bid
+
+Lowest Bid
+
+Average Bid
+
+Winning Buyer
+
+Bid Expiry
+
+Counter Offer
+
+Bid Timeline
+
+Bid Status
+
+Open
+
+Negotiation
+
+Awarded
+
+Rejected
+
+Cancelled
+
+Completed
+
+Every bid should maintain complete audit history.
+
+------------------------------------------------------------
+
+TASK MANAGEMENT
+
+Create Tasks
+
+Assign Users
+
+Priority
+
+Due Date
+
+Reminder
+
+Comments
+
+Attachments
+
+Status
+
+------------------------------------------------------------
+
+ACTIVITY LOG
+
+Maintain history.
+
+Company Created
+
+Company Updated
+
+Stage Changed
+
+Bid Created
+
+Buyer Added
+
+Recycler Added
+
+User Login
+
+Password Changed
+
+Everything should be logged.
+
+------------------------------------------------------------
+
+NOTIFICATIONS
+
+Real Time Notifications
+
+Task Assigned
+
+Company Assigned
+
+Bid Received
+
+Bid Won
+
+Reminder
+
+Mention
+
+------------------------------------------------------------
+
+REPORTS
+
+Daily
+
+Weekly
+
+Monthly
+
+Quarterly
+
+Annual
+
+Buyer Performance
+
+Bid Performance
+
+Revenue
+
+Pipeline
+
+Companies
+
+Managers
+
+Team Performance
+
+Export PDF
+
+Export Excel
+
+------------------------------------------------------------
+
+GLOBAL SEARCH
+
+Search everything.
+
+Companies
+
+Buyers
+
+Recyclers
+
+Users
+
+Tasks
+
+Activities
+
+Bids
+
+------------------------------------------------------------
+
+ADMIN PANEL
+
+Professional Admin Panel similar to Pipedrive.
+
+Manage Users
+
+Manage Roles
+
+Manage Permissions
+
+Pipeline Stages
+
+Custom Fields
+
+Dropdown Values
+
+Email Templates
+
+Activity Types
+
+Notification Settings
+
+Import
+
+Export
+
+Audit Logs
+
+Login Logs
+
+Database Backup
+
+Application Settings
+
+------------------------------------------------------------
+
+FILES
+
+Upload
+
+Images
+
+PDF
+
+Excel
+
+Word
+
+Certificates
+
+Inspection Reports
+
+Company Documents
+
+Buyer Documents
+
+Recycler Documents
+
+------------------------------------------------------------
+
+DATABASE TABLES
+
+Users
+
+Roles
+
+Permissions
+
+Companies
+
+Contacts
+
+Buyers
+
+Recyclers
+
+Assets
+
+Bids
+
+Bid History
+
+Activities
+
+Tasks
+
+Notes
+
+Files
+
+Notifications
+
+Audit Logs
+
+Login Logs
+
+Reports
+
+Dashboard
+
+Pipeline
+
+Settings
+
+Tags
+
+Custom Fields
+
+------------------------------------------------------------
+
+SECURITY
+
+JWT
+
+Role Based Access
+
+Password Hashing
+
+Input Validation
+
+Rate Limiting
+
+SQL Injection Protection
+
+XSS Protection
+
+CSRF Protection
+
+Secure API
+
+Audit Trail
+
+------------------------------------------------------------
+
+PERFORMANCE
+
+Server Side Pagination
+
+Optimized Queries
+
+Caching
+
+Lazy Loading
+
+Reusable Components
+
+Error Boundaries
+
+Loading Skeletons
+
+Responsive Design
+
+Dark Mode Ready
+
+------------------------------------------------------------
+
+DESIGN
+
+Modern CRM
+
+Minimal
+
+Professional
+
+Rounded Cards
+
+Soft Shadows
+
+Corporate Green Theme
+
+Excellent Typography
+
+Fast Navigation
+
+Fully Responsive
+
+Desktop First
+
+------------------------------------------------------------
+
+SPECIAL REQUIREMENTS FOR MY BUSINESS
+
+This CRM is specifically for IT Asset Disposal and E-Waste Recycling.
+
+Workflow:
+
+1. Add Enterprise Company.
+
+2. Track Company in Pipeline.
+
+3. Schedule Site Inspection.
+
+4. Upload Inspection Report.
+
+5. Create Material List.
+
+6. Send RFQ to Buyers.
+
+7. Buyers submit bids.
+
+8. Compare bids.
+
+9. Select Winning Buyer.
+
+10. Generate Pickup Schedule.
+
+11. Track Material Collection.
+
+12. Generate Certificates.
+
+13. Complete Project.
+
+Every project should have a complete timeline.
+
+------------------------------------------------------------
+
+FINAL REQUIREMENTS
+
+This software should feel like a commercial SaaS CRM.
+
+No unfinished pages.
+
+No placeholder buttons.
+
+No demo content.
+
+Everything should work.
+
+Every CRUD operation should connect to PostgreSQL.
+
+Every page should use real APIs.
+
+Every module should have proper validation.
+
+Every role should have correct permissions.
+
+Every dashboard widget should calculate live data.
+
+Every chart should display real database values.
+
+Code should be modular, scalable, reusable and production-ready.
+
+Do not stop after generating UI.
+
+Continue until the entire application is fully functional and production-ready.

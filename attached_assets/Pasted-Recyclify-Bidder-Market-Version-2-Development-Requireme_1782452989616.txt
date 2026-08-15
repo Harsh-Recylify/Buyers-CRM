@@ -1,0 +1,528 @@
+Recyclify Bidder Market - Version 2 Development Requirements
+This is NOT a redesign request.
+
+The UI already exists.
+
+Your task is to fix the existing modules, connect everything with the PostgreSQL database, and make every feature fully functional.
+
+Do not create placeholder pages or dummy components.
+
+Every button, form, drag-and-drop action, and database operation must work correctly.
+
+1. Companies Module (Highest Priority)
+The Companies module is currently broken.
+
+Current Issues
+The Add Company button does not work.
+
+Companies cannot be created.
+
+Companies are not being saved into the PostgreSQL database.
+
+Newly created companies do not appear in the Companies table.
+
+Companies are not connected to the Pipeline.
+
+Companies do not display their current stage.
+
+Companies are not connected to Buyers or Bids.
+
+Required Functionality
+Build a fully working Companies module.
+
+When a user clicks Add Company, open a fully functional modal/form.
+
+Fields should include:
+
+Company Name
+
+Industry
+
+Contact Person
+
+Phone
+
+Email
+
+Address
+
+State
+
+City
+
+Pincode
+
+Priority
+
+Assigned Team Member
+
+Current Pipeline Stage
+
+Expected Material Quantity
+
+Estimated Project Value
+
+Expected Pickup Date
+
+Notes
+
+When the user clicks Save:
+
+Validate required fields.
+
+Save the company into PostgreSQL.
+
+Refresh the Companies list immediately.
+
+Automatically create an Activity Log entry.
+
+Automatically create a Timeline entry.
+
+Automatically create a Pipeline card.
+
+No page refresh should be required.
+
+Company Details Page
+Clicking on a company should open a dedicated Company Details page.
+
+Each company should contain:
+
+Overview
+Company Information
+
+Assigned Manager
+
+Assigned Team Member
+
+Current Stage
+
+Status
+
+Priority
+
+Expected Value
+
+Timeline
+Every activity should appear here.
+
+Examples:
+
+Company Created
+
+Stage Changed
+
+Bid Created
+
+Bid Updated
+
+Inspection Scheduled
+
+Inspection Completed
+
+Quotation Sent
+
+Material Picked Up
+
+Project Closed
+
+Each activity should show
+
+Date
+
+Time
+
+User
+
+Description
+
+Notes
+Users can
+
+Add Notes
+
+Edit Notes
+
+Delete Notes
+
+Tasks
+Create Tasks
+
+Assign Tasks
+
+Complete Tasks
+
+Due Date
+
+Priority
+
+Status
+
+Files
+Upload
+
+Inspection Reports
+
+Quotation PDFs
+
+Purchase Orders
+
+Invoices
+
+Images
+
+Certificates
+
+Every file should be stored correctly.
+
+Bid Management (Very Important)
+Every company should have its own Bid section.
+
+This is where ALL bids should be managed.
+
+When viewing a company:
+
+Click
+
+Create New Bid
+
+The system should allow selecting multiple Buyers and Recyclers.
+
+Each buyer should submit a separate bid.
+
+The Bid section should display:
+
+Buyer Name
+
+Bid Amount
+
+Material Quantity
+
+Remarks
+
+Created Date
+
+Created By
+
+Bid Status
+
+The system should automatically calculate:
+
+Highest Bid
+
+Lowest Bid
+
+Average Bid
+
+Winning Bid
+
+Difference between bids
+
+Bid History
+
+Everything should remain attached to the company.
+
+2. Pipeline Module
+The Pipeline is currently not functional.
+
+Current Issues
+
+Cannot drag cards.
+
+Cannot drop cards.
+
+Cannot create new stages.
+
+Cannot rename stages.
+
+Cannot delete stages.
+
+Changes are not saved.
+
+Required Functionality
+Create a fully functional Kanban Board.
+
+Default stages:
+
+New Lead
+
+Contacted
+
+Meeting Scheduled
+
+Site Inspection
+
+Quotation Sent
+
+Bid Open
+
+Negotiation
+
+Approved
+
+Pickup Scheduled
+
+Material Collected
+
+Completed
+
+Won
+
+Lost
+
+Users should be able to:
+
+Create New Stage
+
+Rename Stage
+
+Delete Stage
+
+Reorder Stages
+
+Drag Company Cards
+
+Drop Company Cards
+
+When a company is dragged:
+
+Update the PostgreSQL database immediately.
+
+Update the Company's Current Stage.
+
+Create an Activity Log entry.
+
+Update the Timeline.
+
+Refresh the Dashboard automatically.
+
+The drag-and-drop experience should be smooth and reliable.
+
+3. Buyers Module
+Current Issues
+
+Cannot add buyers.
+
+Form does not save.
+
+Buyer list does not refresh.
+
+Required Functionality
+Create a fully working Buyers module.
+
+Buyer Fields:
+
+Company Name
+
+Buyer Name
+
+Phone
+
+Email
+
+GST
+
+PAN
+
+Address
+
+State
+
+City
+
+Material Categories
+
+Maximum Bid Value
+
+Payment Terms
+
+Preferred States
+
+Rating
+
+Status
+
+Notes
+
+When saved:
+
+Store in PostgreSQL.
+
+Refresh table.
+
+Allow editing.
+
+Allow deleting (soft delete).
+
+Allow searching.
+
+Allow filtering.
+
+Allow sorting.
+
+4. Recycler Module
+Keep this module.
+
+It should function exactly like Buyers.
+
+Fields include:
+
+Recycler Name
+
+Company Name
+
+Phone
+
+Email
+
+GST
+
+CPCB Authorization
+
+SPCB Authorization
+
+Certificates
+
+Material Categories
+
+Capacity
+
+Payment Terms
+
+Notes
+
+Everything should be fully functional.
+
+5. Remove Assets Module
+Completely remove the Assets module.
+
+Remove:
+
+Sidebar Menu
+
+Routes
+
+Pages
+
+Database references
+
+Navigation
+
+Permissions
+
+Do not leave broken links.
+
+6. Dashboard
+Dashboard should update automatically using live PostgreSQL data.
+
+Display:
+
+Total Companies
+
+Companies by Stage
+
+Open Bids
+
+Won Projects
+
+Lost Projects
+
+Today's Activities
+
+Upcoming Tasks
+
+Top Buyers
+
+Recent Companies
+
+Recent Bids
+
+Monthly Revenue
+
+Expected Revenue
+
+Pipeline Funnel
+
+All dashboard cards should update automatically whenever data changes.
+
+7. Database
+Ensure proper relationships:
+
+Company
+
+↓
+
+Multiple Bids
+
+↓
+
+Multiple Buyers
+
+↓
+
+Winning Buyer
+
+Each Company should have:
+
+Many Activities
+
+Many Tasks
+
+Many Files
+
+Many Notes
+
+Many Bids
+
+Every relationship should use foreign keys and Prisma models correctly.
+
+8. Notifications
+Create notifications when:
+
+Company Added
+
+Company Updated
+
+Stage Changed
+
+Bid Added
+
+Task Assigned
+
+Buyer Added
+
+Recycler Added
+
+Notifications should appear instantly.
+
+9. Code Quality
+Do not rebuild the UI unless necessary.
+
+Reuse existing components.
+
+Fix the current implementation.
+
+Ensure every CRUD operation is connected to PostgreSQL.
+
+No mock data.
+
+No placeholder functions.
+
+No console errors.
+
+No broken routes.
+
+No unfinished features.
+
+Final Objective
+The application should behave like a commercial CRM similar to Pipedrive.
+
+Every module must be fully functional.
+
+Every database operation must work.
+
+Every button must perform its intended action.
+
+Every page must use live PostgreSQL data.
+
+The CRM should be stable, production-ready, scalable, and suitable for daily business use by the Recyclify team.
+

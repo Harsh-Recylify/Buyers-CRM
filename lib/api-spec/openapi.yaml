@@ -1,0 +1,3727 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Recyclify Bidder Market CRM API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: auth
+  - name: users
+  - name: companies
+  - name: pipeline
+  - name: contacts
+  - name: notes
+  - name: activities
+  - name: tasks
+  - name: buyers
+  - name: recyclers
+  - name: assets
+  - name: bids
+  - name: files
+  - name: notifications
+  - name: dashboard
+  - name: reports
+  - name: search
+  - name: admin
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ────────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "200":
+          description: Reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── USERS ───────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+    post:
+      operationId: createUser
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: User deleted
+
+  # ── COMPANIES ───────────────────────────────────────────────────────────────
+  /companies:
+    get:
+      operationId: listCompanies
+      tags: [companies]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: stage
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: assignedTo
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyListResponse"
+    post:
+      operationId: createCompany
+      tags: [companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyInput"
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  /companies/{id}:
+    get:
+      operationId: getCompany
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    patch:
+      operationId: updateCompany
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyUpdate"
+      responses:
+        "200":
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    delete:
+      operationId: deleteCompany
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Company deleted
+
+  /companies/{id}/stage:
+    patch:
+      operationId: updateCompanyStage
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StageUpdate"
+      responses:
+        "200":
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  /companies/{id}/restore:
+    patch:
+      operationId: restoreCompany
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Company restored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  # ── COMPANY BIDS ─────────────────────────────────────────────────────────────
+  /companies/{companyId}/company-bids:
+    get:
+      operationId: listCompanyBids
+      tags: [companies]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of bids for the company
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBidListResponse"
+    post:
+      operationId: createCompanyBid
+      tags: [companies]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyBidInput"
+      responses:
+        "201":
+          description: Bid created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBid"
+
+  /company-bids/{id}:
+    patch:
+      operationId: updateCompanyBid
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanyBidUpdate"
+      responses:
+        "200":
+          description: Bid updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBid"
+    delete:
+      operationId: deleteCompanyBid
+      tags: [companies]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── PIPELINE ─────────────────────────────────────────────────────────────────
+  /pipeline:
+    get:
+      operationId: getPipeline
+      tags: [pipeline]
+      parameters:
+        - name: boardId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pipeline data grouped by stage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineResponse"
+
+  /pipeline/boards:
+    get:
+      operationId: listPipelineBoards
+      tags: [pipeline]
+      responses:
+        "200":
+          description: List of pipeline boards
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineBoardListResponse"
+    post:
+      operationId: createPipelineBoard
+      tags: [pipeline]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PipelineBoardInput"
+      responses:
+        "201":
+          description: Board created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineBoard"
+
+  /pipeline/boards/{id}:
+    patch:
+      operationId: updatePipelineBoard
+      tags: [pipeline]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PipelineBoardInput"
+      responses:
+        "200":
+          description: Board updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineBoard"
+    delete:
+      operationId: deletePipelineBoard
+      tags: [pipeline]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /pipeline/boards/{boardId}/stages:
+    get:
+      operationId: listPipelineStages
+      tags: [pipeline]
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stages for a board
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStageListResponse"
+    post:
+      operationId: createPipelineStage
+      tags: [pipeline]
+      parameters:
+        - name: boardId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PipelineStageInput"
+      responses:
+        "201":
+          description: Stage created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStage"
+
+  /pipeline/stages/{id}:
+    patch:
+      operationId: updatePipelineStage
+      tags: [pipeline]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PipelineStageInput"
+      responses:
+        "200":
+          description: Stage updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineStage"
+    delete:
+      operationId: deletePipelineStage
+      tags: [pipeline]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── CONTACTS ─────────────────────────────────────────────────────────────────
+  /companies/{companyId}/contacts:
+    get:
+      operationId: listContacts
+      tags: [contacts]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contact"
+    post:
+      operationId: createContact
+      tags: [contacts]
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactInput"
+      responses:
+        "201":
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+
+  /contacts/{id}:
+    patch:
+      operationId: updateContact
+      tags: [contacts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactUpdate"
+      responses:
+        "200":
+          description: Contact updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contact"
+    delete:
+      operationId: deleteContact
+      tags: [contacts]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Contact deleted
+
+  # ── NOTES ────────────────────────────────────────────────────────────────────
+  /notes:
+    get:
+      operationId: listNotes
+      tags: [notes]
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      operationId: createNote
+      tags: [notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+
+  /notes/{id}:
+    patch:
+      operationId: updateNote
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteUpdate"
+      responses:
+        "200":
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    delete:
+      operationId: deleteNote
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Note deleted
+
+  # ── ACTIVITIES ───────────────────────────────────────────────────────────────
+  /activities:
+    get:
+      operationId: listActivities
+      tags: [activities]
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityListResponse"
+    post:
+      operationId: createActivity
+      tags: [activities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityInput"
+      responses:
+        "201":
+          description: Activity created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+
+  # ── TASKS ────────────────────────────────────────────────────────────────────
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      parameters:
+        - name: assignedTo
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskListResponse"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Task deleted
+
+  /tasks/{id}/comments:
+    get:
+      operationId: listTaskComments
+      tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskComment"
+    post:
+      operationId: createTaskComment
+      tags: [tasks]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCommentInput"
+      responses:
+        "201":
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskComment"
+
+  # ── BUYERS ───────────────────────────────────────────────────────────────────
+  /buyers:
+    get:
+      operationId: listBuyers
+      tags: [buyers]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Buyers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuyerListResponse"
+    post:
+      operationId: createBuyer
+      tags: [buyers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyerInput"
+      responses:
+        "201":
+          description: Buyer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Buyer"
+
+  /buyers/{id}:
+    get:
+      operationId: getBuyer
+      tags: [buyers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Buyer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Buyer"
+    patch:
+      operationId: updateBuyer
+      tags: [buyers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyerUpdate"
+      responses:
+        "200":
+          description: Buyer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Buyer"
+    delete:
+      operationId: deleteBuyer
+      tags: [buyers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Buyer deleted
+
+  # ── RECYCLERS ────────────────────────────────────────────────────────────────
+  /recyclers:
+    get:
+      operationId: listRecyclers
+      tags: [recyclers]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recyclers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecyclerListResponse"
+    post:
+      operationId: createRecycler
+      tags: [recyclers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecyclerInput"
+      responses:
+        "201":
+          description: Recycler created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recycler"
+
+  /recyclers/{id}:
+    get:
+      operationId: getRecycler
+      tags: [recyclers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recycler
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recycler"
+    patch:
+      operationId: updateRecycler
+      tags: [recyclers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecyclerUpdate"
+      responses:
+        "200":
+          description: Recycler updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recycler"
+    delete:
+      operationId: deleteRecycler
+      tags: [recyclers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Recycler deleted
+
+  # ── ASSETS ───────────────────────────────────────────────────────────────────
+  /assets:
+    get:
+      operationId: listAssets
+      tags: [assets]
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Assets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetListResponse"
+    post:
+      operationId: createAsset
+      tags: [assets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetInput"
+      responses:
+        "201":
+          description: Asset created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+
+  /assets/{id}:
+    get:
+      operationId: getAsset
+      tags: [assets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+    patch:
+      operationId: updateAsset
+      tags: [assets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetUpdate"
+      responses:
+        "200":
+          description: Asset updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Asset"
+    delete:
+      operationId: deleteAsset
+      tags: [assets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Asset deleted
+
+  # ── BIDS ─────────────────────────────────────────────────────────────────────
+  /bids:
+    get:
+      operationId: listBids
+      tags: [bids]
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bids
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidListResponse"
+    post:
+      operationId: createBid
+      tags: [bids]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidInput"
+      responses:
+        "201":
+          description: Bid created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  /bids/{id}:
+    get:
+      operationId: getBid
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+    patch:
+      operationId: updateBid
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidUpdate"
+      responses:
+        "200":
+          description: Bid updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+    delete:
+      operationId: deleteBid
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Bid deleted
+
+  /bids/{id}/quotes:
+    get:
+      operationId: listBidQuotes
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bid quotes from buyers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BidQuote"
+    post:
+      operationId: addBidQuote
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidQuoteInput"
+      responses:
+        "201":
+          description: Quote added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidQuote"
+
+  /bids/{id}/award:
+    post:
+      operationId: awardBid
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BidAwardInput"
+      responses:
+        "200":
+          description: Bid awarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+
+  /bids/{id}/history:
+    get:
+      operationId: getBidHistory
+      tags: [bids]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bid audit history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BidHistoryEntry"
+
+  # ── FILES ────────────────────────────────────────────────────────────────────
+  /files:
+    get:
+      operationId: listFiles
+      tags: [files]
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FileRecord"
+    post:
+      operationId: createFileRecord
+      tags: [files]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileRecordInput"
+      responses:
+        "201":
+          description: File record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileRecord"
+
+  /files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: File deleted
+
+  # ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/mark-all-read:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ── DASHBOARD ────────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Dashboard KPI stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/charts:
+    get:
+      operationId: getDashboardCharts
+      tags: [dashboard]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardCharts"
+
+  /dashboard/recent:
+    get:
+      operationId: getDashboardRecent
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Recent activities, companies, bids, and upcoming follow-ups
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardRecent"
+
+  # ── REPORTS ──────────────────────────────────────────────────────────────────
+  /reports/pipeline:
+    get:
+      operationId: getPipelineReport
+      tags: [reports]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Pipeline report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PipelineReport"
+
+  /reports/bids:
+    get:
+      operationId: getBidsReport
+      tags: [reports]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bids report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidsReport"
+
+  /reports/buyers:
+    get:
+      operationId: getBuyersReport
+      tags: [reports]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Buyer performance report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuyersReport"
+
+  /reports/team:
+    get:
+      operationId: getTeamReport
+      tags: [reports]
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Team performance report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamReport"
+
+  # ── GLOBAL SEARCH ─────────────────────────────────────────────────────────────
+  /search:
+    get:
+      operationId: globalSearch
+      tags: [search]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  # ── ADMIN ─────────────────────────────────────────────────────────────────────
+  /admin/audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [admin]
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  /admin/login-logs:
+    get:
+      operationId: listLoginLogs
+      tags: [admin]
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Login logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginLogListResponse"
+
+  /admin/settings:
+    get:
+      operationId: getAppSettings
+      tags: [admin]
+      responses:
+        "200":
+          description: Application settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+    patch:
+      operationId: updateAppSettings
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettingsUpdate"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
+  /invitations:
+    get:
+      operationId: listInvitations
+      tags: [invitations]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationListResponse"
+    post:
+      operationId: createInvitation
+      tags: [invitations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+
+  /invitations/{id}:
+    delete:
+      operationId: revokeInvitation
+      tags: [invitations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Invitation revoked
+
+  /invitations/{id}/resend:
+    post:
+      operationId: resendInvitation
+      tags: [invitations]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invitation refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+
+  /invitations/verify:
+    get:
+      operationId: verifyInvitation
+      tags: [invitations]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invitation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationVerifyResponse"
+        "400":
+          description: Invalid or expired invitation
+
+  /invitations/accept:
+    post:
+      operationId: acceptInvitation
+      tags: [invitations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptInvitationInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid or expired invitation
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    PaginationMeta:
+      type: object
+      required: [total, page, limit, totalPages]
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ── AUTH SCHEMAS ────────────────────────────────────────────────────────────
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        rememberMe:
+          type: boolean
+
+    RegisterInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+
+    ForgotPasswordInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordInput:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          minLength: 6
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+        avatar:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    Invitation:
+      type: object
+      required: [id, email, role, status, token, inviteUrl, expiresAt, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        role:
+          type: string
+        department:
+          type: ["string", "null"]
+        status:
+          type: string
+        token:
+          type: string
+        inviteUrl:
+          type: string
+        invitedByName:
+          type: ["string", "null"]
+        acceptedAt:
+          type: ["string", "null"]
+        expiresAt:
+          type: string
+        createdAt:
+          type: string
+
+    InvitationListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invitation"
+
+    InvitationInput:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        department:
+          type: string
+
+    InvitationVerifyResponse:
+      type: object
+      required: [email, role, valid]
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+        department:
+          type: ["string", "null"]
+        invitedByName:
+          type: ["string", "null"]
+        valid:
+          type: boolean
+
+    AcceptInvitationInput:
+      type: object
+      required: [token, name, password]
+      properties:
+        token:
+          type: string
+        name:
+          type: string
+          minLength: 2
+        password:
+          type: string
+          minLength: 6
+        phone:
+          type: string
+
+    User:
+      type: object
+      required: [id, name, email, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        phone:
+          type: ["string", "null"]
+        department:
+          type: ["string", "null"]
+        avatar:
+          type: ["string", "null"]
+        lastLogin:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    UserListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    UserInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        phone:
+          type: string
+        department:
+          type: string
+
+    # ── COMPANY SCHEMAS ─────────────────────────────────────────────────────────
+    Company:
+      type: object
+      required: [id, name, stage, status, priority, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        industry:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        gst:
+          type: ["string", "null"]
+        pan:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        pincode:
+          type: ["string", "null"]
+        leadSource:
+          type: ["string", "null"]
+        ownerId:
+          type: ["integer", "null"]
+        ownerName:
+          type: ["string", "null"]
+        assignedManagerId:
+          type: ["integer", "null"]
+        assignedManagerName:
+          type: ["string", "null"]
+        stage:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        expectedScrapWeight:
+          type: ["number", "null"]
+        expectedRevenue:
+          type: ["number", "null"]
+        expectedPickupDate:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        deletedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CompanyListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Company"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CompanyInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        industry:
+          type: string
+        website:
+          type: string
+        gst:
+          type: string
+        pan:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        city:
+          type: string
+        pincode:
+          type: string
+        leadSource:
+          type: string
+        ownerId:
+          type: integer
+        assignedManagerId:
+          type: integer
+        stage:
+          type: string
+        priority:
+          type: string
+        expectedScrapWeight:
+          type: number
+        expectedRevenue:
+          type: number
+        expectedPickupDate:
+          type: string
+        notes:
+          type: string
+
+    CompanyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        industry:
+          type: string
+        website:
+          type: string
+        gst:
+          type: string
+        pan:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        city:
+          type: string
+        pincode:
+          type: string
+        leadSource:
+          type: string
+        ownerId:
+          type: integer
+        assignedManagerId:
+          type: integer
+        stage:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        expectedScrapWeight:
+          type: number
+        expectedRevenue:
+          type: number
+        expectedPickupDate:
+          type: string
+        notes:
+          type: string
+
+    StageUpdate:
+      type: object
+      required: [stage]
+      properties:
+        stage:
+          type: string
+
+    # ── PIPELINE ────────────────────────────────────────────────────────────────
+    PipelineBoard:
+      type: object
+      required: [id, name, color, isDefault, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+        isDefault:
+          type: boolean
+        createdById:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    PipelineBoardInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    PipelineBoardListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PipelineBoard"
+
+    PipelineStage:
+      type: object
+      required: [id, boardId, name, color, position, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        boardId:
+          type: integer
+        name:
+          type: string
+        color:
+          type: string
+        position:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    PipelineStageInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+        position:
+          type: integer
+
+    PipelineStageListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PipelineStage"
+
+    PipelineColumn:
+      type: object
+      required: [stage, companies, totalRevenue, count]
+      properties:
+        stage:
+          type: string
+        stageId:
+          type: integer
+        stageColor:
+          type: string
+        stagePosition:
+          type: integer
+        count:
+          type: integer
+        totalRevenue:
+          type: number
+        companies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Company"
+
+    PipelineResponse:
+      type: object
+      required: [columns, boardId]
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/PipelineColumn"
+        boardId:
+          type: integer
+
+    # ── CONTACT SCHEMAS ─────────────────────────────────────────────────────────
+    Contact:
+      type: object
+      required: [id, companyId, name, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        name:
+          type: string
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        designation:
+          type: ["string", "null"]
+        isPrimary:
+          type: boolean
+        createdAt:
+          type: string
+
+    ContactInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        designation:
+          type: string
+        isPrimary:
+          type: boolean
+
+    ContactUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        designation:
+          type: string
+        isPrimary:
+          type: boolean
+
+    # ── NOTE SCHEMAS ────────────────────────────────────────────────────────────
+    Note:
+      type: object
+      required: [id, entityType, entityId, content, createdAt]
+      properties:
+        id:
+          type: integer
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        content:
+          type: string
+        authorId:
+          type: ["integer", "null"]
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    NoteInput:
+      type: object
+      required: [entityType, entityId, content]
+      properties:
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        content:
+          type: string
+
+    NoteUpdate:
+      type: object
+      properties:
+        content:
+          type: string
+
+    # ── ACTIVITY SCHEMAS ────────────────────────────────────────────────────────
+    Activity:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        entityName:
+          type: ["string", "null"]
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        metadata:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ActivityListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    ActivityInput:
+      type: object
+      required: [type, description]
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        metadata:
+          type: string
+
+    # ── TASK SCHEMAS ────────────────────────────────────────────────────────────
+    Task:
+      type: object
+      required: [id, title, status, priority, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+        priority:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        entityName:
+          type: ["string", "null"]
+        assignedToId:
+          type: ["integer", "null"]
+        assignedToName:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+        reminderAt:
+          type: ["string", "null"]
+        completedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    TaskListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    TaskInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        assignedToId:
+          type: integer
+        dueDate:
+          type: string
+        reminderAt:
+          type: string
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        assignedToId:
+          type: integer
+        dueDate:
+          type: string
+        reminderAt:
+          type: string
+
+    TaskComment:
+      type: object
+      required: [id, taskId, content, createdAt]
+      properties:
+        id:
+          type: integer
+        taskId:
+          type: integer
+        content:
+          type: string
+        authorId:
+          type: ["integer", "null"]
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    TaskCommentInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    # ── BUYER SCHEMAS ───────────────────────────────────────────────────────────
+    Buyer:
+      type: object
+      required: [id, name, status, rating, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        company:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        gst:
+          type: ["string", "null"]
+        pan:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        materialCategories:
+          type: array
+          items:
+            type: string
+        maxBid:
+          type: ["number", "null"]
+        preferredMaterials:
+          type: ["string", "null"]
+        pickupStates:
+          type: array
+          items:
+            type: string
+        paymentTerms:
+          type: ["string", "null"]
+        rating:
+          type: number
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+        totalBids:
+          type: integer
+        wonBids:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    BuyerListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Buyer"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    BuyerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        gst:
+          type: string
+        pan:
+          type: string
+        state:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        materialCategories:
+          type: array
+          items:
+            type: string
+        maxBid:
+          type: number
+        preferredMaterials:
+          type: string
+        pickupStates:
+          type: array
+          items:
+            type: string
+        paymentTerms:
+          type: string
+        rating:
+          type: number
+        notes:
+          type: string
+
+    BuyerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        gst:
+          type: string
+        pan:
+          type: string
+        state:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        materialCategories:
+          type: array
+          items:
+            type: string
+        maxBid:
+          type: number
+        preferredMaterials:
+          type: string
+        pickupStates:
+          type: array
+          items:
+            type: string
+        paymentTerms:
+          type: string
+        rating:
+          type: number
+        status:
+          type: string
+        notes:
+          type: string
+
+    # ── RECYCLER SCHEMAS ────────────────────────────────────────────────────────
+    Recycler:
+      type: object
+      required: [id, name, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        company:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        gst:
+          type: ["string", "null"]
+        cpcbAuth:
+          type: ["string", "null"]
+        spcbAuth:
+          type: ["string", "null"]
+        certificates:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        materialCategories:
+          type: array
+          items:
+            type: string
+        capacity:
+          type: ["string", "null"]
+        pickupArea:
+          type: ["string", "null"]
+        paymentTerms:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    RecyclerListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recycler"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    RecyclerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        gst:
+          type: string
+        cpcbAuth:
+          type: string
+        spcbAuth:
+          type: string
+        certificates:
+          type: string
+        address:
+          type: string
+        materialCategories:
+          type: array
+          items:
+            type: string
+        capacity:
+          type: string
+        pickupArea:
+          type: string
+        paymentTerms:
+          type: string
+        notes:
+          type: string
+
+    RecyclerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        gst:
+          type: string
+        cpcbAuth:
+          type: string
+        spcbAuth:
+          type: string
+        certificates:
+          type: string
+        address:
+          type: string
+        materialCategories:
+          type: array
+          items:
+            type: string
+        capacity:
+          type: string
+        pickupArea:
+          type: string
+        paymentTerms:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+
+    # ── ASSET SCHEMAS ───────────────────────────────────────────────────────────
+    Asset:
+      type: object
+      required: [id, companyId, category, status, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        companyName:
+          type: ["string", "null"]
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        quantity:
+          type: integer
+        condition:
+          type: ["string", "null"]
+        estimatedWeight:
+          type: ["number", "null"]
+        estimatedValue:
+          type: ["number", "null"]
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    AssetListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Asset"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    AssetInput:
+      type: object
+      required: [companyId, category]
+      properties:
+        companyId:
+          type: integer
+        category:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+        condition:
+          type: string
+        estimatedWeight:
+          type: number
+        estimatedValue:
+          type: number
+        notes:
+          type: string
+
+    AssetUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+        condition:
+          type: string
+        estimatedWeight:
+          type: number
+        estimatedValue:
+          type: number
+        status:
+          type: string
+        notes:
+          type: string
+
+    # ── BID SCHEMAS ─────────────────────────────────────────────────────────────
+    Bid:
+      type: object
+      required: [id, title, companyId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        companyId:
+          type: integer
+        companyName:
+          type: ["string", "null"]
+        status:
+          type: string
+        description:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        winningBuyerId:
+          type: ["integer", "null"]
+        winningBuyerName:
+          type: ["string", "null"]
+        winningAmount:
+          type: ["number", "null"]
+        highestBid:
+          type: ["number", "null"]
+        lowestBid:
+          type: ["number", "null"]
+        averageBid:
+          type: ["number", "null"]
+        totalQuotes:
+          type: integer
+        createdById:
+          type: ["integer", "null"]
+        createdByName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    BidListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    BidInput:
+      type: object
+      required: [title, companyId]
+      properties:
+        title:
+          type: string
+        companyId:
+          type: integer
+        description:
+          type: string
+        expiryDate:
+          type: string
+        buyerIds:
+          type: array
+          items:
+            type: integer
+
+    BidUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        expiryDate:
+          type: string
+
+    BidQuote:
+      type: object
+      required: [id, bidId, buyerId, amount, createdAt]
+      properties:
+        id:
+          type: integer
+        bidId:
+          type: integer
+        buyerId:
+          type: integer
+        buyerName:
+          type: ["string", "null"]
+        amount:
+          type: number
+        counterOffer:
+          type: ["number", "null"]
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    BidQuoteInput:
+      type: object
+      required: [buyerId, amount]
+      properties:
+        buyerId:
+          type: integer
+        amount:
+          type: number
+        counterOffer:
+          type: number
+        notes:
+          type: string
+
+    BidAwardInput:
+      type: object
+      required: [buyerId, amount]
+      properties:
+        buyerId:
+          type: integer
+        amount:
+          type: number
+
+    BidHistoryEntry:
+      type: object
+      required: [id, bidId, action, createdAt]
+      properties:
+        id:
+          type: integer
+        bidId:
+          type: integer
+        action:
+          type: string
+        description:
+          type: string
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    # ── COMPANY BID SCHEMAS ──────────────────────────────────────────────────────
+    CompanyBid:
+      type: object
+      required: [id, companyId, buyerCompany, bidAmount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        buyerCompany:
+          type: string
+        contactPerson:
+          type: ["string", "null"]
+        mobile:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        bidAmount:
+          type: number
+        location:
+          type: ["string", "null"]
+        pickupTimeline:
+          type: ["string", "null"]
+        paymentTerms:
+          type: ["string", "null"]
+        remarks:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdById:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    CompanyBidListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyBid"
+
+    CompanyBidInput:
+      type: object
+      required: [buyerCompany, bidAmount]
+      properties:
+        buyerCompany:
+          type: string
+        contactPerson:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        bidAmount:
+          type: number
+        location:
+          type: string
+        pickupTimeline:
+          type: string
+        paymentTerms:
+          type: string
+        remarks:
+          type: string
+
+    CompanyBidUpdate:
+      type: object
+      properties:
+        buyerCompany:
+          type: string
+        contactPerson:
+          type: string
+        mobile:
+          type: string
+        email:
+          type: string
+        bidAmount:
+          type: number
+        location:
+          type: string
+        pickupTimeline:
+          type: string
+        paymentTerms:
+          type: string
+        remarks:
+          type: string
+        status:
+          type: string
+
+    # ── FILE SCHEMAS ────────────────────────────────────────────────────────────
+    FileRecord:
+      type: object
+      required: [id, entityType, entityId, filename, originalName, mimeType, size, url, createdAt]
+      properties:
+        id:
+          type: integer
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        filename:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        url:
+          type: string
+        uploadedById:
+          type: ["integer", "null"]
+        uploadedByName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    FileRecordInput:
+      type: object
+      required: [entityType, entityId, filename, originalName, mimeType, size, url]
+      properties:
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        filename:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        url:
+          type: string
+
+    # ── NOTIFICATION SCHEMAS ────────────────────────────────────────────────────
+    Notification:
+      type: object
+      required: [id, type, title, message, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        isRead:
+          type: boolean
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    NotificationListResponse:
+      type: object
+      required: [data, meta, unreadCount]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+        unreadCount:
+          type: integer
+
+    # ── DASHBOARD SCHEMAS ───────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [todayCompanies, todayActivities, todayBids, monthlyCompanies, monthlyBids, activeBuyers, activeRecyclers, wonDeals, lostDeals, openDeals, totalRevenue, expectedRevenue]
+      properties:
+        todayCompanies:
+          type: integer
+        todayActivities:
+          type: integer
+        todayBids:
+          type: integer
+        monthlyCompanies:
+          type: integer
+        monthlyBids:
+          type: integer
+        activeBuyers:
+          type: integer
+        activeRecyclers:
+          type: integer
+        wonDeals:
+          type: integer
+        lostDeals:
+          type: integer
+        openDeals:
+          type: integer
+        totalRevenue:
+          type: number
+        expectedRevenue:
+          type: number
+
+    MonthlyDataPoint:
+      type: object
+      required: [month, value]
+      properties:
+        month:
+          type: string
+        value:
+          type: number
+
+    DashboardCharts:
+      type: object
+      required: [monthlyCompanies, monthlyBidValue, pipelineFunnel, bidStatus, topBuyers, topManagers]
+      properties:
+        monthlyCompanies:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyDataPoint"
+        monthlyBidValue:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyDataPoint"
+        pipelineFunnel:
+          type: array
+          items:
+            type: object
+            required: [stage, count, value]
+            properties:
+              stage:
+                type: string
+              count:
+                type: integer
+              value:
+                type: number
+        bidStatus:
+          type: array
+          items:
+            type: object
+            required: [status, count]
+            properties:
+              status:
+                type: string
+              count:
+                type: integer
+        topBuyers:
+          type: array
+          items:
+            type: object
+            required: [id, name, bids, wonAmount]
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              bids:
+                type: integer
+              wonAmount:
+                type: number
+        topManagers:
+          type: array
+          items:
+            type: object
+            required: [id, name, companies, deals]
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              companies:
+                type: integer
+              deals:
+                type: integer
+
+    DashboardRecent:
+      type: object
+      required: [recentActivities, recentCompanies, recentBids, upcomingFollowUps]
+      properties:
+        recentActivities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        recentCompanies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Company"
+        recentBids:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+        upcomingFollowUps:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+
+    # ── REPORT SCHEMAS ──────────────────────────────────────────────────────────
+    PipelineReport:
+      type: object
+      required: [stageBreakdown, totalCompanies, totalValue, conversionRate]
+      properties:
+        stageBreakdown:
+          type: array
+          items:
+            type: object
+            required: [stage, count, value, percentage]
+            properties:
+              stage:
+                type: string
+              count:
+                type: integer
+              value:
+                type: number
+              percentage:
+                type: number
+        totalCompanies:
+          type: integer
+        totalValue:
+          type: number
+        conversionRate:
+          type: number
+
+    BidsReport:
+      type: object
+      required: [totalBids, openBids, awardedBids, totalValue, avgBidValue, statusBreakdown]
+      properties:
+        totalBids:
+          type: integer
+        openBids:
+          type: integer
+        awardedBids:
+          type: integer
+        totalValue:
+          type: number
+        avgBidValue:
+          type: number
+        statusBreakdown:
+          type: array
+          items:
+            type: object
+            required: [status, count, value]
+            properties:
+              status:
+                type: string
+              count:
+                type: integer
+              value:
+                type: number
+
+    BuyersReport:
+      type: object
+      required: [buyers]
+      properties:
+        buyers:
+          type: array
+          items:
+            type: object
+            required: [id, name, totalBids, wonBids, totalAmount, winRate]
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              totalBids:
+                type: integer
+              wonBids:
+                type: integer
+              totalAmount:
+                type: number
+              winRate:
+                type: number
+
+    TeamReport:
+      type: object
+      required: [members]
+      properties:
+        members:
+          type: array
+          items:
+            type: object
+            required: [id, name, role, companies, tasks, activitiesLogged]
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              role:
+                type: string
+              companies:
+                type: integer
+              tasks:
+                type: integer
+              activitiesLogged:
+                type: integer
+
+    # ── SEARCH SCHEMAS ──────────────────────────────────────────────────────────
+    SearchResult:
+      type: object
+      required: [type, id, title, subtitle]
+      properties:
+        type:
+          type: string
+        id:
+          type: integer
+        title:
+          type: string
+        subtitle:
+          type: ["string", "null"]
+
+    SearchResults:
+      type: object
+      required: [results, total]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+        total:
+          type: integer
+
+    # ── ADMIN SCHEMAS ───────────────────────────────────────────────────────────
+    AuditLog:
+      type: object
+      required: [id, action, entityType, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        action:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: ["integer", "null"]
+        description:
+          type: string
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AuditLogListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    LoginLog:
+      type: object
+      required: [id, userId, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: ["string", "null"]
+        userEmail:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    LoginLogListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoginLog"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    AppSettings:
+      type: object
+      required: [id, appName, updatedAt]
+      properties:
+        id:
+          type: integer
+        appName:
+          type: string
+        appLogo:
+          type: ["string", "null"]
+        primaryColor:
+          type: string
+        timezone:
+          type: string
+        currency:
+          type: string
+        emailNotifications:
+          type: boolean
+        updatedAt:
+          type: string
+
+    AppSettingsUpdate:
+      type: object
+      properties:
+        appName:
+          type: string
+        primaryColor:
+          type: string
+        timezone:
+          type: string
+        currency:
+          type: string
+        emailNotifications:
+          type: boolean
