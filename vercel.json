@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @workspace/mockup-sandbox build",
-  "outputDirectory": "artifacts/mockup-sandbox/dist",
+  "buildCommand": "pnpm --filter @workspace/recyclify-crm run build",
+  "outputDirectory": "artifacts/recyclify-crm/dist/public",
   "framework": "vite"
 }
