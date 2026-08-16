@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @workspace/recyclify-crm run build && node scripts/sync-build.js",
+  "buildCommand": "pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/recyclify-crm run build && node scripts/sync-build.js",
   "outputDirectory": "public",
   "framework": "vite",
   "rewrites": [
