@@ -6,14 +6,24 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
+import path from "node:path";
+import fs from "node:fs";
+
 const app: Express = express();
 
-// Security Headers
-app.use(helmet());
+// Security Headers (relaxed CSP so SPA assets & fonts load smoothly)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
-// CORS configuration (allow dynamic environments, falling back to all)
-const allowedOrigins = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(",") 
+// CORS configuration (allow dynamic environments, sanitize whitespace & trailing slashes)
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",")
+      .map((origin) => origin.trim().replace(/\/+$/, ""))
+      .filter(Boolean)
   : true;
 
 app.use(
@@ -70,5 +80,30 @@ app.use("/api/auth/register", authLimiter);
 app.use("/api", apiLimiter);
 
 app.use("/api", router);
+
+// Serve frontend static assets if built and present (Fullstack / Single-Service deployment)
+const candidateStaticDirs = [
+  path.resolve(__dirname, "../../recyclify-crm/dist/public"),
+  path.resolve(__dirname, "../public"),
+  path.resolve(process.cwd(), "dist/public"),
+  path.resolve(process.cwd(), "public"),
+  path.resolve(process.cwd(), "artifacts/recyclify-crm/dist/public"),
+];
+const staticDir = candidateStaticDirs.find((dir) => fs.existsSync(dir));
+
+if (staticDir) {
+  app.use(express.static(staticDir));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    const indexHtml = path.join(staticDir, "index.html");
+    if (fs.existsSync(indexHtml)) {
+      res.sendFile(indexHtml);
+    } else {
+      next();
+    }
+  });
+}
 
 export default app;
