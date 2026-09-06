@@ -106,4 +106,15 @@ if (staticDir) {
   });
 }
 
+// Global JSON error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  logger.error({ err, url: req.url }, "Unhandled server error");
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+  });
+});
+
 export default app;
