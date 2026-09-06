@@ -112,8 +112,10 @@ app.use((err: any, req: any, res: any, next: any) => {
   if (res.headersSent) {
     return next(err);
   }
+  const detail = err.cause?.message || err.detail || "";
+  const errorMessage = detail ? `${err.message} (${detail})` : (err.message || "Internal Server Error");
   res.status(err.status || 500).json({
-    error: err.message || "Internal Server Error",
+    error: errorMessage,
   });
 });
 
