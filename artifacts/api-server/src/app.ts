@@ -93,8 +93,8 @@ const staticDir = candidateStaticDirs.find((dir) => fs.existsSync(dir));
 
 if (staticDir) {
   app.use(express.static(staticDir));
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) {
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) {
       return next();
     }
     const indexHtml = path.join(staticDir, "index.html");
