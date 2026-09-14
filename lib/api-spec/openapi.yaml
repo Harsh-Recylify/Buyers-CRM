@@ -26,6 +26,7 @@ tags:
   - name: reports
   - name: search
   - name: admin
+  - name: proactive
 
 paths:
   /healthz:
@@ -1913,8 +1914,89 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
-        "400":
-          description: Invalid or expired invitation
+  # ── PROACTIVE CRM ─────────────────────────────────────────────────────────
+  /proactive/insights:
+    get:
+      operationId: getProactiveInsights
+      tags: [proactive]
+      summary: Get AI-driven proactive insights, stale deals, expiring bids, and action cards
+      responses:
+        "200":
+          description: Proactive insights
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProactiveInsightsResponse"
+
+  /proactive/next-action/{companyId}:
+    get:
+      operationId: getProactiveNextAction
+      tags: [proactive]
+      summary: Get stage-specific next best action for a company
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Next best action guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProactiveNextActionResponse"
+
+  /proactive/buyer-matches/{companyId}:
+    get:
+      operationId: getProactiveBuyerMatches
+      tags: [proactive]
+      summary: Get smart matching buyers for company scrap and asset categories
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Matched buyers list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProactiveBuyerMatchesResponse"
+
+  /proactive/auto-followup:
+    post:
+      operationId: executeProactiveFollowup
+      tags: [proactive]
+      summary: 1-Click execution to auto-create task and log activity for a company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProactiveFollowupInput"
+      responses:
+        "200":
+          description: Follow-up action executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /proactive/generate-digest:
+    post:
+      operationId: generateProactiveDigest
+      tags: [proactive]
+      summary: Proactively scan CRM and generate notifications for urgent at-risk items
+      responses:
+        "200":
+          description: Digest generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
 components:
   schemas:
@@ -3725,3 +3807,241 @@ components:
           type: string
         emailNotifications:
           type: boolean
+
+    # ── PROACTIVE SCHEMAS ──────────────────────────────────────────────────────
+    StaleDeal:
+      type: object
+      required: [companyId, companyName, stage, daysStale, riskLevel, priority, suggestedAction]
+      properties:
+        companyId:
+          type: integer
+        companyName:
+          type: string
+        stage:
+          type: string
+        daysStale:
+          type: integer
+        expectedRevenue:
+          type: ["number", "null"]
+        priority:
+          type: string
+        assignedManagerName:
+          type: ["string", "null"]
+        lastActivityDate:
+          type: ["string", "null"]
+        suggestedAction:
+          type: string
+        riskLevel:
+          type: string
+
+    ExpiringBid:
+      type: object
+      required: [bidId, title, expiryDate, quotesCount, hoursLeft, urgency]
+      properties:
+        bidId:
+          type: integer
+        title:
+          type: string
+        companyName:
+          type: ["string", "null"]
+        expiryDate:
+          type: string
+        quotesCount:
+          type: integer
+        hoursLeft:
+          type: integer
+        urgency:
+          type: string
+
+    OverdueTask:
+      type: object
+      required: [taskId, title, priority]
+      properties:
+        taskId:
+          type: integer
+        title:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+        priority:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        entityName:
+          type: ["string", "null"]
+        assignedToName:
+          type: ["string", "null"]
+
+    BuyerOpportunity:
+      type: object
+      required: [companyId, companyName, assetCount, matchedBuyerCount]
+      properties:
+        companyId:
+          type: integer
+        companyName:
+          type: string
+        assetCount:
+          type: integer
+        matchedBuyerCount:
+          type: integer
+        topBuyerName:
+          type: ["string", "null"]
+
+    ProactiveActionCard:
+      type: object
+      required: [id, title, description, category, priority, impact, actionType]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        priority:
+          type: string
+        impact:
+          type: string
+        actionType:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        entityName:
+          type: ["string", "null"]
+        suggestedTaskTitle:
+          type: ["string", "null"]
+        whatsappDraft:
+          type: ["string", "null"]
+
+    ProactiveInsightsResponse:
+      type: object
+      required: [healthScore, healthStatus, staleDealsCount, expiringBidsCount, overdueTasksCount, urgentActionsCount, staleDeals, expiringBids, overdueTasks, buyerMatchOpportunities, actionCards]
+      properties:
+        healthScore:
+          type: integer
+        healthStatus:
+          type: string
+        staleDealsCount:
+          type: integer
+        expiringBidsCount:
+          type: integer
+        overdueTasksCount:
+          type: integer
+        urgentActionsCount:
+          type: integer
+        staleDeals:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaleDeal"
+        expiringBids:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpiringBid"
+        overdueTasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/OverdueTask"
+        buyerMatchOpportunities:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuyerOpportunity"
+        actionCards:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProactiveActionCard"
+
+    ProactiveNextActionResponse:
+      type: object
+      required: [companyId, companyName, stage, healthScore, recommendedAction, rationale, urgency, suggestedTaskTitle, whatsappDraft, emailDraft, matchedBuyersCount]
+      properties:
+        companyId:
+          type: integer
+        companyName:
+          type: string
+        stage:
+          type: string
+        healthScore:
+          type: integer
+        recommendedAction:
+          type: string
+        rationale:
+          type: string
+        urgency:
+          type: string
+        suggestedTaskTitle:
+          type: string
+        whatsappDraft:
+          type: string
+        emailDraft:
+          type: string
+        matchedBuyersCount:
+          type: integer
+
+    BuyerMatch:
+      type: object
+      required: [buyerId, buyerName, matchScore, matchingCategories, winRate, rating]
+      properties:
+        buyerId:
+          type: integer
+        buyerName:
+          type: string
+        company:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        matchScore:
+          type: integer
+        matchingCategories:
+          type: array
+          items:
+            type: string
+        winRate:
+          type: number
+        rating:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    ProactiveBuyerMatchesResponse:
+      type: object
+      required: [companyId, companyName, assetsSummary, matches]
+      properties:
+        companyId:
+          type: integer
+        companyName:
+          type: string
+        assetsSummary:
+          type: array
+          items:
+            type: string
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuyerMatch"
+
+    ProactiveFollowupInput:
+      type: object
+      required: [companyId, taskTitle]
+      properties:
+        companyId:
+          type: integer
+        taskTitle:
+          type: string
+        priority:
+          type: string
+        dueDate:
+          type: string
+        noteContent:
+          type: string
+

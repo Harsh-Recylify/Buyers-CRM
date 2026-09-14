@@ -21,6 +21,7 @@ import reportsRouter from "./reports";
 import searchRouter from "./search";
 import adminRouter from "./admin";
 import invitationsRouter from "./invitations";
+import proactiveRouter from "./proactive";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use(reportsRouter);
 router.use(searchRouter);
 router.use(adminRouter);
 router.use(invitationsRouter);
+router.use(proactiveRouter);
 
 export default router;

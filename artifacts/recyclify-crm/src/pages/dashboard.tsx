@@ -1,22 +1,83 @@
 import React from "react";
-import { useGetDashboardStats, useGetDashboardCharts, useGetDashboardRecent } from "@workspace/api-client-react";
+import { 
+  useGetDashboardStats, 
+  useGetDashboardCharts, 
+  useGetDashboardRecent,
+  useGetProactiveInsights,
+  getGetProactiveInsightsQueryKey
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Activity, Gavel, DollarSign, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+import { 
+  Building2, Activity, Gavel, DollarSign, TrendingUp, AlertCircle, 
+  ArrowUpRight, ArrowDownRight, Clock, Sparkles, Zap, ArrowRight, CheckCircle2 
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: charts, isLoading: chartsLoading } = useGetDashboardCharts();
   const { data: recent, isLoading: recentLoading } = useGetDashboardRecent();
+  const { data: proactive } = useGetProactiveInsights({
+    query: { queryKey: getGetProactiveInsightsQueryKey(), refetchInterval: 60000 }
+  });
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your IT Asset Disposal pipeline and operations.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Overview of your IT Asset Disposal pipeline and operations.</p>
+        </div>
+
+        <Link href="/proactive">
+          <Button className="bg-[#118847] hover:bg-[#0e7038] text-white gap-2 shadow-xs">
+            <Sparkles className="h-4 w-4" />
+            Open Proactive Command Hub
+          </Button>
+        </Link>
       </div>
+
+      {/* Proactive Action Banner */}
+      {proactive && (
+        <Card className="border-2 border-[#118847]/20 bg-gradient-to-r from-emerald-50/60 via-white to-emerald-50/30 shadow-xs">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-[#118847]/10 flex items-center justify-center text-[#118847] shrink-0">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#118847]">
+                      Proactive Deal Acceleration
+                    </span>
+                    <Badge variant="outline" className="bg-white text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                      Health: {proactive.healthScore}/100 ({proactive.healthStatus})
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">
+                    {proactive.staleDealsCount > 0 
+                      ? `⚠️ ${proactive.staleDealsCount} stagnant deals require immediate attention · ${proactive.expiringBidsCount} bids closing soon`
+                      : `All active deals have fresh activity! ${proactive.buyerMatchOpportunities.length} buyer matching opportunities available.`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Link href="/proactive">
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1 border-emerald-300 text-emerald-800 hover:bg-emerald-50">
+                    View Action Items ({proactive.urgentActionsCount}) <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (

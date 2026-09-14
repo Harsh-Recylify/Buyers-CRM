@@ -13,6 +13,7 @@ import Register from "@/pages/register";
 import AcceptInvite from "@/pages/accept-invite";
 import ForgotPassword from "@/pages/forgot-password";
 import Dashboard from "@/pages/dashboard";
+import Proactive from "@/pages/proactive";
 import Companies from "@/pages/companies";
 import CompanyDetail from "@/pages/company-detail";
 import Pipeline from "@/pages/pipeline";
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
 
       <ProtectedRoute path="/dashboard" component={() => <Layout><Dashboard /></Layout>} />
+      <ProtectedRoute path="/proactive" component={() => <Layout><Proactive /></Layout>} />
       <ProtectedRoute path="/companies/:id" component={() => <Layout><CompanyDetail /></Layout>} />
       <ProtectedRoute path="/companies" component={() => <Layout><Companies /></Layout>} />
       <ProtectedRoute path="/pipeline" component={() => <Layout><Pipeline /></Layout>} />

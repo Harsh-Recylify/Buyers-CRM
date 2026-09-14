@@ -2319,3 +2319,142 @@ export const AcceptInvitationResponse = zod.object({
 })
 
 
+/**
+ * @summary Get AI-driven proactive insights, stale deals, expiring bids, and action cards
+ */
+export const GetProactiveInsightsResponse = zod.object({
+  "healthScore": zod.number(),
+  "healthStatus": zod.string(),
+  "staleDealsCount": zod.number(),
+  "expiringBidsCount": zod.number(),
+  "overdueTasksCount": zod.number(),
+  "urgentActionsCount": zod.number(),
+  "staleDeals": zod.array(zod.object({
+  "companyId": zod.number(),
+  "companyName": zod.string(),
+  "stage": zod.string(),
+  "daysStale": zod.number(),
+  "expectedRevenue": zod.number().nullish(),
+  "priority": zod.string(),
+  "assignedManagerName": zod.string().nullish(),
+  "lastActivityDate": zod.string().nullish(),
+  "suggestedAction": zod.string(),
+  "riskLevel": zod.string()
+})),
+  "expiringBids": zod.array(zod.object({
+  "bidId": zod.number(),
+  "title": zod.string(),
+  "companyName": zod.string().nullish(),
+  "expiryDate": zod.string(),
+  "quotesCount": zod.number(),
+  "hoursLeft": zod.number(),
+  "urgency": zod.string()
+})),
+  "overdueTasks": zod.array(zod.object({
+  "taskId": zod.number(),
+  "title": zod.string(),
+  "dueDate": zod.string().nullish(),
+  "priority": zod.string(),
+  "entityType": zod.string().nullish(),
+  "entityId": zod.number().nullish(),
+  "entityName": zod.string().nullish(),
+  "assignedToName": zod.string().nullish()
+})),
+  "buyerMatchOpportunities": zod.array(zod.object({
+  "companyId": zod.number(),
+  "companyName": zod.string(),
+  "assetCount": zod.number(),
+  "matchedBuyerCount": zod.number(),
+  "topBuyerName": zod.string().nullish()
+})),
+  "actionCards": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "category": zod.string(),
+  "priority": zod.string(),
+  "impact": zod.string(),
+  "actionType": zod.string(),
+  "entityType": zod.string().nullish(),
+  "entityId": zod.number().nullish(),
+  "entityName": zod.string().nullish(),
+  "suggestedTaskTitle": zod.string().nullish(),
+  "whatsappDraft": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary Get stage-specific next best action for a company
+ */
+export const GetProactiveNextActionParams = zod.object({
+  "companyId": zod.coerce.number()
+})
+
+export const GetProactiveNextActionResponse = zod.object({
+  "companyId": zod.number(),
+  "companyName": zod.string(),
+  "stage": zod.string(),
+  "healthScore": zod.number(),
+  "recommendedAction": zod.string(),
+  "rationale": zod.string(),
+  "urgency": zod.string(),
+  "suggestedTaskTitle": zod.string(),
+  "whatsappDraft": zod.string(),
+  "emailDraft": zod.string(),
+  "matchedBuyersCount": zod.number()
+})
+
+
+/**
+ * @summary Get smart matching buyers for company scrap and asset categories
+ */
+export const GetProactiveBuyerMatchesParams = zod.object({
+  "companyId": zod.coerce.number()
+})
+
+export const GetProactiveBuyerMatchesResponse = zod.object({
+  "companyId": zod.number(),
+  "companyName": zod.string(),
+  "assetsSummary": zod.array(zod.string()),
+  "matches": zod.array(zod.object({
+  "buyerId": zod.number(),
+  "buyerName": zod.string(),
+  "company": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "state": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "matchScore": zod.number(),
+  "matchingCategories": zod.array(zod.string()),
+  "winRate": zod.number(),
+  "rating": zod.number(),
+  "notes": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary 1-Click execution to auto-create task and log activity for a company
+ */
+export const ExecuteProactiveFollowupBody = zod.object({
+  "companyId": zod.number(),
+  "taskTitle": zod.string(),
+  "priority": zod.string().optional(),
+  "dueDate": zod.string().optional(),
+  "noteContent": zod.string().optional()
+})
+
+export const ExecuteProactiveFollowupResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Proactively scan CRM and generate notifications for urgent at-risk items
+ */
+export const GenerateProactiveDigestResponse = zod.object({
+  "message": zod.string()
+})
+
+

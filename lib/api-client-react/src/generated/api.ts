@@ -106,6 +106,10 @@ import type {
   PipelineStage,
   PipelineStageInput,
   PipelineStageListResponse,
+  ProactiveBuyerMatchesResponse,
+  ProactiveFollowupInput,
+  ProactiveInsightsResponse,
+  ProactiveNextActionResponse,
   ProfileUpdate,
   Recycler,
   RecyclerInput,
@@ -6852,7 +6856,7 @@ export const acceptInvitation = async (acceptInvitationInput: AcceptInvitationIn
 
 
 
-export const getAcceptInvitationMutationOptions = <TError = ErrorType<void>,
+export const getAcceptInvitationMutationOptions = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: BodyType<AcceptInvitationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: BodyType<AcceptInvitationInput>}, TContext> => {
 
@@ -6881,9 +6885,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AcceptInvitationMutationResult = NonNullable<Awaited<ReturnType<typeof acceptInvitation>>>
     export type AcceptInvitationMutationBody = BodyType<AcceptInvitationInput>
-    export type AcceptInvitationMutationError = ErrorType<void>
+    export type AcceptInvitationMutationError = ErrorType<unknown>
 
-    export const useAcceptInvitation = <TError = ErrorType<void>,
+    export const useAcceptInvitation = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptInvitation>>, TError,{data: BodyType<AcceptInvitationInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof acceptInvitation>>,
@@ -6892,5 +6896,376 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getAcceptInvitationMutationOptions(options));
+    }
+
+export const getGetProactiveInsightsUrl = () => {
+
+
+
+
+  return `/api/proactive/insights`
+}
+
+/**
+ * @summary Get AI-driven proactive insights, stale deals, expiring bids, and action cards
+ */
+export const getProactiveInsights = async ( options?: RequestInit): Promise<ProactiveInsightsResponse> => {
+
+  return customFetch<ProactiveInsightsResponse>(getGetProactiveInsightsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProactiveInsightsQueryKey = () => {
+    return [
+    `/api/proactive/insights`
+    ] as const;
+    }
+
+
+export const getGetProactiveInsightsQueryOptions = <TData = Awaited<ReturnType<typeof getProactiveInsights>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveInsights>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProactiveInsightsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProactiveInsights>>> = ({ signal }) => getProactiveInsights({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProactiveInsights>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProactiveInsightsQueryResult = NonNullable<Awaited<ReturnType<typeof getProactiveInsights>>>
+export type GetProactiveInsightsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get AI-driven proactive insights, stale deals, expiring bids, and action cards
+ */
+
+export function useGetProactiveInsights<TData = Awaited<ReturnType<typeof getProactiveInsights>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveInsights>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProactiveInsightsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProactiveNextActionUrl = (companyId: number,) => {
+
+
+
+
+  return `/api/proactive/next-action/${companyId}`
+}
+
+/**
+ * @summary Get stage-specific next best action for a company
+ */
+export const getProactiveNextAction = async (companyId: number, options?: RequestInit): Promise<ProactiveNextActionResponse> => {
+
+  return customFetch<ProactiveNextActionResponse>(getGetProactiveNextActionUrl(companyId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProactiveNextActionQueryKey = (companyId: number,) => {
+    return [
+    `/api/proactive/next-action/${companyId}`
+    ] as const;
+    }
+
+
+export const getGetProactiveNextActionQueryOptions = <TData = Awaited<ReturnType<typeof getProactiveNextAction>>, TError = ErrorType<unknown>>(companyId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveNextAction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProactiveNextActionQueryKey(companyId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProactiveNextAction>>> = ({ signal }) => getProactiveNextAction(companyId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProactiveNextAction>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProactiveNextActionQueryResult = NonNullable<Awaited<ReturnType<typeof getProactiveNextAction>>>
+export type GetProactiveNextActionQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get stage-specific next best action for a company
+ */
+
+export function useGetProactiveNextAction<TData = Awaited<ReturnType<typeof getProactiveNextAction>>, TError = ErrorType<unknown>>(
+ companyId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveNextAction>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProactiveNextActionQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetProactiveBuyerMatchesUrl = (companyId: number,) => {
+
+
+
+
+  return `/api/proactive/buyer-matches/${companyId}`
+}
+
+/**
+ * @summary Get smart matching buyers for company scrap and asset categories
+ */
+export const getProactiveBuyerMatches = async (companyId: number, options?: RequestInit): Promise<ProactiveBuyerMatchesResponse> => {
+
+  return customFetch<ProactiveBuyerMatchesResponse>(getGetProactiveBuyerMatchesUrl(companyId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProactiveBuyerMatchesQueryKey = (companyId: number,) => {
+    return [
+    `/api/proactive/buyer-matches/${companyId}`
+    ] as const;
+    }
+
+
+export const getGetProactiveBuyerMatchesQueryOptions = <TData = Awaited<ReturnType<typeof getProactiveBuyerMatches>>, TError = ErrorType<unknown>>(companyId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveBuyerMatches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProactiveBuyerMatchesQueryKey(companyId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProactiveBuyerMatches>>> = ({ signal }) => getProactiveBuyerMatches(companyId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProactiveBuyerMatches>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetProactiveBuyerMatchesQueryResult = NonNullable<Awaited<ReturnType<typeof getProactiveBuyerMatches>>>
+export type GetProactiveBuyerMatchesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get smart matching buyers for company scrap and asset categories
+ */
+
+export function useGetProactiveBuyerMatches<TData = Awaited<ReturnType<typeof getProactiveBuyerMatches>>, TError = ErrorType<unknown>>(
+ companyId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProactiveBuyerMatches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetProactiveBuyerMatchesQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExecuteProactiveFollowupUrl = () => {
+
+
+
+
+  return `/api/proactive/auto-followup`
+}
+
+/**
+ * @summary 1-Click execution to auto-create task and log activity for a company
+ */
+export const executeProactiveFollowup = async (proactiveFollowupInput: ProactiveFollowupInput, options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getExecuteProactiveFollowupUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(proactiveFollowupInput)
+  }
+);}
+
+
+
+
+export const getExecuteProactiveFollowupMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof executeProactiveFollowup>>, TError,{data: BodyType<ProactiveFollowupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof executeProactiveFollowup>>, TError,{data: BodyType<ProactiveFollowupInput>}, TContext> => {
+
+const mutationKey = ['executeProactiveFollowup'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof executeProactiveFollowup>>, {data: BodyType<ProactiveFollowupInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  executeProactiveFollowup(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExecuteProactiveFollowupMutationResult = NonNullable<Awaited<ReturnType<typeof executeProactiveFollowup>>>
+    export type ExecuteProactiveFollowupMutationBody = BodyType<ProactiveFollowupInput>
+    export type ExecuteProactiveFollowupMutationError = ErrorType<unknown>
+
+    /**
+ * @summary 1-Click execution to auto-create task and log activity for a company
+ */
+export const useExecuteProactiveFollowup = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof executeProactiveFollowup>>, TError,{data: BodyType<ProactiveFollowupInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof executeProactiveFollowup>>,
+        TError,
+        {data: BodyType<ProactiveFollowupInput>},
+        TContext
+      > => {
+      return useMutation(getExecuteProactiveFollowupMutationOptions(options));
+    }
+
+export const getGenerateProactiveDigestUrl = () => {
+
+
+
+
+  return `/api/proactive/generate-digest`
+}
+
+/**
+ * @summary Proactively scan CRM and generate notifications for urgent at-risk items
+ */
+export const generateProactiveDigest = async ( options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getGenerateProactiveDigestUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerateProactiveDigestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateProactiveDigest>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateProactiveDigest>>, TError,void, TContext> => {
+
+const mutationKey = ['generateProactiveDigest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateProactiveDigest>>, void> = () => {
+
+
+          return  generateProactiveDigest(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateProactiveDigestMutationResult = NonNullable<Awaited<ReturnType<typeof generateProactiveDigest>>>
+
+    export type GenerateProactiveDigestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Proactively scan CRM and generate notifications for urgent at-risk items
+ */
+export const useGenerateProactiveDigest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateProactiveDigest>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateProactiveDigest>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getGenerateProactiveDigestMutationOptions(options));
     }
 
