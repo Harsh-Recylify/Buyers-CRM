@@ -1,12 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { 
-  useListNotifications, 
-  getListNotificationsQueryKey,
-  useGetProactiveInsights,
-  getGetProactiveInsightsQueryKey
-} from "@workspace/api-client-react";
+import { useListNotifications, getListNotificationsQueryKey } from "@workspace/api-client-react";
 import logo from "@assets/images_1782449948308.png";
 import { 
   LayoutDashboard, 
@@ -24,20 +19,16 @@ import {
   User as UserIcon,
   Search,
   LogOut,
-  Menu,
-  Sparkles
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { ProactiveCopilotTrigger } from "./proactive-copilot";
-import { PwaInstallBanner } from "./pwa-install-banner";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Proactive Hub", href: "/proactive", icon: Sparkles, badgeColor: "bg-emerald-600" },
   { name: "Companies", href: "/companies", icon: Building2 },
   { name: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { name: "Buyers", href: "/buyers", icon: Users },
@@ -68,12 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { query: { enabled: !!user, refetchInterval: 60000, queryKey: getListNotificationsQueryKey(notifParams) } }
   );
 
-  const { data: proactive } = useGetProactiveInsights({
-    query: { enabled: !!user, refetchInterval: 60000, queryKey: getGetProactiveInsightsQueryKey() }
-  });
-
   const unreadCount = notifications?.unreadCount || 0;
-  const urgentProactiveCount = (proactive?.staleDealsCount || 0) + (proactive?.expiringBidsCount || 0);
   const isAdmin = user?.role === "super_admin" || user?.role === "admin";
 
   return (
@@ -103,11 +89,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {item.name === "Notifications" && unreadCount > 0 && (
                   <Badge variant="destructive" className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0">
                     {unreadCount}
-                  </Badge>
-                )}
-                {item.name === "Proactive Hub" && urgentProactiveCount > 0 && (
-                  <Badge className="ml-auto flex h-5 px-1.5 shrink-0 items-center justify-center rounded-full text-[10px] bg-emerald-600 hover:bg-emerald-700">
-                    {urgentProactiveCount}
                   </Badge>
                 )}
               </Link>
@@ -176,8 +157,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        <PwaInstallBanner />
-        <header className="flex h-14 items-center gap-3 border-b bg-white px-4 lg:px-6">
+        <header className="flex h-14 items-center gap-4 border-b bg-white px-4 lg:px-6">
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
           </Button>
@@ -192,8 +172,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               />
             </form>
           </div>
-
-          <ProactiveCopilotTrigger />
           
           <Button variant="ghost" size="icon" className="relative" asChild>
             <Link href="/notifications">

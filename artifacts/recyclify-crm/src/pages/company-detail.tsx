@@ -9,15 +9,10 @@ import {
   getListCompaniesQueryKey,
   useListCompanyBids, useCreateCompanyBid, useUpdateCompanyBid, useDeleteCompanyBid,
   getListCompanyBidsQueryKey,
-  useGetProactiveNextAction,
-  useGetProactiveBuyerMatches,
-  useExecuteProactiveFollowup,
-  getGetProactiveNextActionQueryKey,
-  getGetProactiveBuyerMatchesQueryKey,
   type CompanyBid,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,9 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Building2, MapPin, Globe, Tag, Calendar, CheckSquare,
   Activity, Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel,
-  Sparkles, Zap, MessageSquare, Mail, Target, Award, ArrowRight, CheckCircle, ChevronRight, Phone
 } from "lucide-react";
-import { SmartCommunicationModal, type CommunicationContext } from "@/components/smart-communication-modal";
 
 const STAGES = [
   "New Lead", "Contacted", "Meeting Scheduled", "Site Inspection",
@@ -446,22 +439,10 @@ export default function CompanyDetail() {
     query: { enabled: !!id, queryKey: getListContactsQueryKey(id) }
   });
 
-  const { data: nextAction } = useGetProactiveNextAction(id, {
-    query: { enabled: !!id, queryKey: getGetProactiveNextActionQueryKey(id) }
-  });
-
-  const { data: buyerMatchesData } = useGetProactiveBuyerMatches(id, {
-    query: { enabled: !!id, queryKey: getGetProactiveBuyerMatchesQueryKey(id) }
-  });
-
   const updateStage = useUpdateCompanyStage();
   const updateCompany = useUpdateCompany();
   const createNote = useCreateNote();
   const createTask = useCreateTask();
-  const autoFollowup = useExecuteProactiveFollowup();
-
-  const [commModalOpen, setCommModalOpen] = React.useState(false);
-  const [commContext, setCommContext] = React.useState<CommunicationContext>({});
 
   const { data: usersData } = useListUsers({}, { query: { queryKey: getListUsersQueryKey({}) } });
   const users = usersData?.data ?? [];
@@ -640,127 +621,6 @@ export default function CompanyDetail() {
         </div>
       </div>
 
-      {/* Progressive Stage Stepper */}
-      <Card className="border bg-white shadow-xs p-3 overflow-hidden">
-        <div className="flex items-center justify-between mb-2 px-1">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-[#118847]/10 text-[#118847] border-[#118847]/30 text-xs font-semibold">
-              Lifecycle Stage Progression
-            </Badge>
-            <span className="text-xs text-muted-foreground">Click any milestone to advance stage directly</span>
-          </div>
-          <span className="text-xs font-semibold text-foreground">
-            Stage {STAGES.indexOf(c.stage) + 1} of {STAGES.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs">
-          {STAGES.map((s, idx) => {
-            const currentIdx = STAGES.indexOf(c.stage);
-            const isPassed = idx < currentIdx;
-            const isCurrent = idx === currentIdx;
-            return (
-              <button
-                key={s}
-                onClick={() => handleStageChange(s)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all ${
-                  isCurrent
-                    ? "bg-[#118847] text-white shadow-xs"
-                    : isPassed
-                    ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {isPassed ? (
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
-                ) : isCurrent ? (
-                  <Zap className="h-3.5 w-3.5 text-amber-300" />
-                ) : (
-                  <span className="text-[10px] opacity-60">{idx + 1}.</span>
-                )}
-                <span>{s}</span>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Proactive Guidance Card */}
-      {nextAction && (
-        <Card className="border-2 border-[#118847]/30 bg-gradient-to-r from-emerald-50/70 via-white to-emerald-50/40 shadow-xs">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full bg-[#118847]/10 flex items-center justify-center text-[#118847]">
-                    <Sparkles className="h-3.5 w-3.5" />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#118847]">
-                    Proactive Deal Guidance
-                  </span>
-                  <Badge variant="outline" className="bg-white text-emerald-800 text-[10px] font-semibold border-emerald-200">
-                    Deal Health: {nextAction.healthScore}%
-                  </Badge>
-                </div>
-                <h3 className="text-base font-bold text-foreground">
-                  Recommended Next Action: {nextAction.recommendedAction}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {nextAction.rationale}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setCommContext({
-                      companyId: id,
-                      companyName: c.name,
-                      stage: c.stage,
-                      expectedRevenue: c.expectedRevenue ? Number(c.expectedRevenue) : null,
-                      expectedScrapWeight: c.expectedScrapWeight ? Number(c.expectedScrapWeight) : null,
-                      initialMessage: nextAction.whatsappDraft,
-                      initialTemplate: c.stage === "New Lead" || c.stage === "Contacted" ? "inspection" : "quotation",
-                    });
-                    setCommModalOpen(true);
-                  }}
-                  className="h-8 text-xs gap-1.5 border-emerald-300 text-emerald-800 bg-white hover:bg-emerald-50"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Draft Outreach
-                </Button>
-
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    autoFollowup.mutate({
-                      data: {
-                        companyId: id,
-                        taskTitle: nextAction.suggestedTaskTitle || `Follow up with ${c.name}`,
-                        priority: nextAction.urgency === "high" ? "high" : "medium",
-                        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-                        noteContent: `[Proactive Guidance Auto-Schedule] Action: ${nextAction.recommendedAction}`,
-                      }
-                    }, {
-                      onSuccess: () => {
-                        toast({ title: "Follow-up task scheduled!" });
-                        queryClient.invalidateQueries({ queryKey: getListTasksQueryKey({ entityType: "company", entityId: id }) });
-                      }
-                    });
-                  }}
-                  disabled={autoFollowup.isPending}
-                  className="h-8 text-xs gap-1.5 bg-[#118847] hover:bg-[#0e7038] text-white font-medium"
-                >
-                  <Zap className="h-3.5 w-3.5" />
-                  1-Click Schedule Task
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="grid gap-4 md:grid-cols-3">
         {[
           { label: "Expected Revenue", value: c.expectedRevenue ? `₹${Number(c.expectedRevenue).toLocaleString("en-IN")}` : "—" },
@@ -779,102 +639,12 @@ export default function CompanyDetail() {
       <Tabs defaultValue="bids">
         <TabsList className="bg-gray-100/80 flex-wrap h-auto gap-1">
           <TabsTrigger value="bids">Bid Comparison</TabsTrigger>
-          <TabsTrigger value="buyers" className="gap-1">
-            <Target className="h-3.5 w-3.5 text-emerald-600" />
-            Smart Buyer Matches ({(buyerMatchesData?.matches || []).length})
-          </TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="activities">Timeline</TabsTrigger>
           <TabsTrigger value="notes">Notes ({notes.length})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({contactsList.length})</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="buyers" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Target className="h-4 w-4 text-[#118847]" />
-                    AI Matched Buyers & Recyclers
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Ranked by asset categories ({(buyerMatchesData?.assetsSummary || []).join(", ") || "IT Scrap"}), state coverage, rating, and historical win rate.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {(!buyerMatchesData?.matches || buyerMatchesData.matches.length === 0) ? (
-                <div className="py-12 text-center text-muted-foreground text-sm">
-                  <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  No buyer matches found for this asset category.
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {buyerMatchesData.matches.map((bm: any) => (
-                    <div key={bm.buyerId} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Link href={`/buyers/${bm.buyerId}`}>
-                            <span className="font-bold text-sm text-foreground hover:underline cursor-pointer">
-                              {bm.buyerName}
-                            </span>
-                          </Link>
-                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[11px] font-bold">
-                            {bm.matchScore}% Match
-                          </Badge>
-                          {bm.rating > 0 && (
-                            <span className="text-xs text-amber-600 font-semibold">★ {bm.rating}</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {bm.company || "Independent Recycler"} · {[bm.city, bm.state].filter(Boolean).join(", ") || "PAN India"} · Win Rate: {bm.winRate}%
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {(bm.matchingCategories || []).map((cat: string) => (
-                            <Badge key={cat} variant="secondary" className="text-[10px] py-0 px-1.5 bg-slate-100 text-slate-700">
-                              {cat}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {bm.phone && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setCommContext({
-                                companyId: id,
-                                companyName: c.name,
-                                contactName: bm.buyerName,
-                                phone: bm.phone,
-                                initialTemplate: "bid_invitation",
-                              });
-                              setCommModalOpen(true);
-                            }}
-                            className="h-8 text-xs gap-1 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
-                          >
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            Invite on WhatsApp
-                          </Button>
-                        )}
-                        <Link href={`/buyers/${bm.buyerId}`}>
-                          <Button size="sm" variant="ghost" className="h-8 text-xs">
-                            View Profile
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="bids" className="mt-4">
           <BidComparisonSection companyId={id} />
@@ -1172,13 +942,6 @@ export default function CompanyDetail() {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Smart Communication Modal */}
-      <SmartCommunicationModal
-        open={commModalOpen}
-        onOpenChange={setCommModalOpen}
-        context={commContext}
-      />
     </div>
   );
 }

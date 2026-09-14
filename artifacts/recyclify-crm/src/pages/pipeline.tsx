@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import {
   Settings2, Plus, Pencil, Trash2, ChevronUp, ChevronDown,
-  Check, X, Building2, ExternalLink, GripVertical, AlertTriangle, Sparkles, Filter
+  Check, X, Building2, ExternalLink, GripVertical,
 } from "lucide-react";
 
 const BOARD_COLORS = [
@@ -486,23 +486,6 @@ function DraggableCard({
                 <p className="text-xs text-muted-foreground mb-1.5">{company.industry}</p>
               )}
 
-              {/* Proactive Stale Warning */}
-              {(() => {
-                const diffMs = Date.now() - new Date(company.updatedAt || company.createdAt).getTime();
-                const daysDiff = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-                if (daysDiff >= 4 && stage !== "Won" && stage !== "Lost") {
-                  return (
-                    <div className="mb-1.5">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
-                        <AlertTriangle className="h-2.5 w-2.5 text-amber-600" />
-                        {daysDiff}d stagnant
-                      </span>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-
               <div className="flex items-center justify-between gap-1">
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 capitalize ${priorityColor}`}>
                   {company.priority}
@@ -593,7 +576,6 @@ export default function Pipeline() {
   const [editCompany, setEditCompany] = React.useState<any>(null);
   const [manageStagesOpen, setManageStagesOpen] = React.useState(false);
   const [newBoardOpen, setNewBoardOpen] = React.useState(false);
-  const [staleOnly, setStaleOnly] = React.useState(false);
 
   // Boards
   const { data: boardsData } = useListPipelineBoards({
@@ -666,28 +648,7 @@ export default function Pipeline() {
             {totalCompanies} {totalCompanies === 1 ? "company" : "companies"} · Drag cards to move between stages
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant={staleOnly ? "default" : "outline"}
-            size="sm"
-            className={`gap-1.5 ${staleOnly ? "bg-amber-600 hover:bg-amber-700 text-white" : "border-amber-300 text-amber-800 hover:bg-amber-50"}`}
-            onClick={() => setStaleOnly(v => !v)}
-          >
-            <AlertTriangle className="h-3.5 w-3.5" />
-            {staleOnly ? "Showing Stale Deals Only" : "Filter Stale Deals (&gt;4d)"}
-          </Button>
-
-          <Link href="/proactive">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-[#118847]" />
-              Proactive Hub
-            </Button>
-          </Link>
-
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -699,7 +660,7 @@ export default function Pipeline() {
           </Button>
           <Button
             size="sm"
-            className="bg-[#118847] hover:bg-[#0e7038] gap-1.5 text-white"
+            className="bg-[#118847] hover:bg-[#0e7038] gap-1.5"
             onClick={() => setNewBoardOpen(true)}
           >
             <Plus className="h-4 w-4" /> New Board
@@ -760,27 +721,17 @@ export default function Pipeline() {
         ) : (
           <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="flex gap-4 min-w-max h-full items-start">
-              {data?.columns.map((column) => {
-                const filteredCompanies = staleOnly
-                  ? column.companies.filter((c: any) => {
-                      const diffMs = Date.now() - new Date(c.updatedAt || c.createdAt).getTime();
-                      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                      return days >= 4 && column.stage !== "Won" && column.stage !== "Lost";
-                    })
-                  : column.companies;
-
-                return (
-                  <DroppableColumn
-                    key={column.stage}
-                    stage={column.stage}
-                    stageColor={column.stageColor ?? "#6b7280"}
-                    count={filteredCompanies.length}
-                    totalRevenue={filteredCompanies.reduce((s: number, c: any) => s + (c.expectedRevenue || 0), 0)}
-                    companies={filteredCompanies}
-                    onEditClick={setEditCompany}
-                  />
-                );
-              })}
+              {data?.columns.map((column) => (
+                <DroppableColumn
+                  key={column.stage}
+                  stage={column.stage}
+                  stageColor={column.stageColor ?? "#6b7280"}
+                  count={column.count}
+                  totalRevenue={column.totalRevenue}
+                  companies={column.companies}
+                  onEditClick={setEditCompany}
+                />
+              ))}
             </div>
 
             <DragOverlay>
