@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Redirect, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +9,6 @@ import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 
 import Login from "@/pages/login";
-import Register from "@/pages/register";
 import AcceptInvite from "@/pages/accept-invite";
 import ForgotPassword from "@/pages/forgot-password";
 import Dashboard from "@/pages/dashboard";
@@ -41,7 +40,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
+      <Route path="/register"><Redirect to="/login" /></Route>
       <Route path="/accept-invite" component={AcceptInvite} />
       <Route path="/forgot-password" component={ForgotPassword} />
 

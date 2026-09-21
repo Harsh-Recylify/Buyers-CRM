@@ -149,15 +149,6 @@ export default function Login() {
             </form>
           </Form>
         </div>
-        
-        <div className="border-t border-gray-100 p-6 bg-gray-50/50 text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
-            <a href="/register" className="font-semibold text-primary hover:underline">
-              Request access
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );

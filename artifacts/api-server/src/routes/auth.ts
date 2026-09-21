@@ -46,31 +46,8 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/auth/register", async (req, res): Promise<void> => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password) {
-    res.status(400).json({ error: "Name, email and password required" });
-    return;
-  }
-  const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, email.toLowerCase()));
-  if (existing) {
-    res.status(400).json({ error: "Email already registered" });
-    return;
-  }
-  const passwordHash = await bcrypt.hash(password, 12);
-  const [user] = await db.insert(usersTable).values({
-    name, email: email.toLowerCase(), passwordHash,
-    role: role ?? "team_member",
-  }).returning();
-  const token = signToken({ id: user.id, email: user.email, role: user.role, name: user.name });
-  res.status(201).json({
-    token,
-    user: {
-      id: user.id, name: user.name, email: user.email, role: user.role,
-      status: user.status, phone: user.phone, department: user.department,
-      avatar: user.avatar, lastLogin: user.lastLogin, createdAt: user.createdAt.toISOString(),
-    },
-  });
+router.post("/auth/register", async (_req, res): Promise<void> => {
+  res.status(403).json({ error: "Public registration is disabled. User credentials must be created by an administrator." });
 });
 
 router.post("/auth/forgot-password", async (req, res): Promise<void> => {
