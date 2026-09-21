@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, Filter, MoreHorizontal, ArrowRight, Building2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Plus, Filter, MoreHorizontal, ArrowRight, Building2, X } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -72,11 +73,33 @@ export default function Companies() {
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
   const [form, setForm] = React.useState<CompanyFormData>(emptyForm());
   const [page, setPage] = React.useState(1);
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [stageFilter, setStageFilter] = React.useState<string>("");
+  const [priorityFilter, setPriorityFilter] = React.useState<string>("");
+  const [ownerFilter, setOwnerFilter] = React.useState<string>("");
+
+  const activeFilterCount = [stageFilter, priorityFilter, ownerFilter].filter(Boolean).length;
+
+  const listParams = {
+    search,
+    page,
+    limit: 20,
+    ...(stageFilter && { stage: stageFilter }),
+    ...(priorityFilter && { priority: priorityFilter }),
+    ...(ownerFilter && { assignedTo: parseInt(ownerFilter) }),
+  };
 
   const { data, isLoading } = useListCompanies(
-    { search, page, limit: 20 },
-    { query: { queryKey: getListCompaniesQueryKey({ search, page, limit: 20 }) } }
+    listParams,
+    { query: { queryKey: getListCompaniesQueryKey(listParams) } }
   );
+
+  const clearFilters = () => {
+    setStageFilter("");
+    setPriorityFilter("");
+    setOwnerFilter("");
+    setPage(1);
+  };
 
   const { data: usersData } = useListUsers(
     {},
@@ -228,10 +251,74 @@ export default function Companies() {
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto gap-2 bg-white">
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
+            <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto gap-2 bg-white">
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 min-w-5 justify-center rounded-full px-1">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Filters</p>
+                    {activeFilterCount > 0 && (
+                      <Button variant="ghost" size="sm" className="h-auto gap-1 px-2 py-1 text-xs" onClick={clearFilters}>
+                        <X className="h-3 w-3" />
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Pipeline Stage</Label>
+                    <Select
+                      value={stageFilter || "all"}
+                      onValueChange={(v) => { setStageFilter(v === "all" ? "" : v); setPage(1); }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All stages" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All stages</SelectItem>
+                        {PIPELINE_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Priority</Label>
+                    <Select
+                      value={priorityFilter || "all"}
+                      onValueChange={(v) => { setPriorityFilter(v === "all" ? "" : v); setPage(1); }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All priorities" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All priorities</SelectItem>
+                        {PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label>Owner</Label>
+                    <Select
+                      value={ownerFilter || "all"}
+                      onValueChange={(v) => { setOwnerFilter(v === "all" ? "" : v); setPage(1); }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All owners" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All owners</SelectItem>
+                        {users.map((u: any) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
