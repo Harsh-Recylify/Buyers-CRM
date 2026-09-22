@@ -1,25 +1,29 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { clientIp } from "./lib/request-ip";
 
 import path from "node:path";
 import fs from "node:fs";
 
 const app: Express = express();
 
-// The app sits behind Render's proxy (and Cloudflare in front of that for
-// the custom domain). Without this, Express sees every request as coming
-// from the same upstream proxy IP, so express-rate-limit below keys its
-// per-IP buckets on that one shared address — meaning ALL visitors combined
-// share a single 15-requests-per-15-minutes login budget instead of each
-// getting their own, causing unrelated users' login attempts to trip each
-// other's rate limit. Trusting the proxy lets Express read the real client
-// IP from X-Forwarded-For instead.
-app.set("trust proxy", true);
+// The app sits behind exactly one reverse proxy at the infra level: Render's
+// own edge, which is what actually opens the TCP connection to this process
+// (Cloudflare, in front of that for the custom domain, is a separate hop
+// that Render's edge sees — not this app). Trusting 1 hop lets Express read
+// the real client IP from the end of the X-Forwarded-For chain instead of
+// treating every request as coming from Render's edge itself — otherwise
+// express-rate-limit below would key all visitors' requests to the same
+// shared bucket, causing unrelated users to trip each other's rate limit.
+// (Deliberately NOT `true`: that trusts every hop in X-Forwarded-For,
+// including client-supplied ones, letting anyone spoof their IP and bypass
+// rate limiting outright — express-rate-limit refuses to start with that.)
+app.set("trust proxy", 1);
 
 // Security Headers (relaxed CSP so SPA assets & fonts load smoothly)
 app.use(
@@ -73,6 +77,7 @@ const apiLimiter = rateLimit({
   limit: 200, // Limit each IP to 200 requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(clientIp(req)),
   message: { error: "Too many requests from this IP, please try again after 15 minutes." },
 });
 
@@ -81,6 +86,7 @@ const authLimiter = rateLimit({
   limit: 15, // Limit each IP to 15 attempts per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(clientIp(req)),
   message: { error: "Too many authentication attempts, please try again after 15 minutes." },
 });
 

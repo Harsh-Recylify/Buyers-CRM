@@ -4,6 +4,8 @@ import { db, usersTable, loginLogsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { signToken, requireAuth } from "../lib/auth";
 import { logActivity, logAudit } from "../lib/activity";
+import { sendEmail, passwordResetEmail, APP_URL } from "../lib/mailer";
+import { clientIp } from "../lib/request-ip";
 
 const router = Router();
 
@@ -30,7 +32,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   await db.update(usersTable).set({ lastLogin: new Date() }).where(eq(usersTable.id, user.id));
   await db.insert(loginLogsTable).values({
     userId: user.id,
-    ipAddress: req.ip ?? null,
+    ipAddress: clientIp(req),
     userAgent: req.headers["user-agent"] ?? null,
     status: "success",
   });
@@ -61,8 +63,9 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
     const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
     const expiry = new Date(Date.now() + 3600000); // 1 hour
     await db.update(usersTable).set({ resetToken: token, resetTokenExpiry: expiry }).where(eq(usersTable.id, user.id));
-    // In production, send email. For now just return token.
-    req.log.info({ token }, "Password reset token generated");
+    const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+    const sent = await sendEmail({ to: user.email, ...passwordResetEmail(user.name, resetUrl) });
+    req.log.info({ sent, resetUrl }, "Password reset requested");
   }
   res.json({ message: "If an account exists with that email, a reset link has been sent." });
 });

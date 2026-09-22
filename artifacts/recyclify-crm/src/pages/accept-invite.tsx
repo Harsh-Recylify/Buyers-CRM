@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@assets/images_1782449948308.png";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -153,7 +154,7 @@ export default function AcceptInvite() {
                       <FormItem>
                         <FormLabel>Create Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="Minimum 6 characters" {...field} />
+                          <PasswordInput placeholder="Minimum 6 characters" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

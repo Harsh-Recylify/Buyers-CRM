@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -152,15 +153,15 @@ export default function Settings() {
               <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label>Current Password</Label>
-                  <Input type="password" {...passwordForm.register("currentPassword", { required: true })} />
+                  <PasswordInput {...passwordForm.register("currentPassword", { required: true })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>New Password</Label>
-                  <Input type="password" {...passwordForm.register("newPassword", { required: true, minLength: 6 })} />
+                  <PasswordInput {...passwordForm.register("newPassword", { required: true, minLength: 6 })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Confirm New Password</Label>
-                  <Input type="password" {...passwordForm.register("confirmPassword", { required: true })} />
+                  <PasswordInput {...passwordForm.register("confirmPassword", { required: true })} />
                 </div>
                 <Button type="submit" className="bg-[#118847] hover:bg-[#0e7038] gap-2 w-full" disabled={changePassword.isPending}>
                   <Shield className="h-4 w-4" />{changePassword.isPending ? "Updating..." : "Change Password"}

@@ -86,7 +86,7 @@ export default function Companies() {
     limit: 20,
     ...(stageFilter && { stage: stageFilter }),
     ...(priorityFilter && { priority: priorityFilter }),
-    ...(ownerFilter && { assignedTo: parseInt(ownerFilter) }),
+    ...(ownerFilter && { ownerId: parseInt(ownerFilter) }),
   };
 
   const { data, isLoading } = useListCompanies(

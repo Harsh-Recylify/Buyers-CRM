@@ -4,6 +4,7 @@ import { eq, ilike, or, count, and, isNull, desc, asc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
 import { logActivity, logAudit } from "../lib/activity";
+import { clientIp } from "../lib/request-ip";
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.get("/companies", requireAuth, async (req, res): Promise<void> => {
   if (q.priority) conditions.push(eq(companiesTable.priority, q.priority) as any);
   if (q.status) conditions.push(eq(companiesTable.status, q.status) as any);
   if (q.assignedTo) conditions.push(eq(companiesTable.assignedManagerId, parseInt(q.assignedTo, 10)) as any);
+  if (q.ownerId) conditions.push(eq(companiesTable.ownerId, parseInt(q.ownerId, 10)) as any);
 
   const where = conditions.length === 1 ? conditions[0]! : and(...(conditions as any[]));
 
@@ -71,7 +73,7 @@ router.post("/companies", requireAuth, async (req, res): Promise<void> => {
     type: "company_created", description: `Company "${name}" was created`,
     entityType: "company", entityId: company.id, entityName: name, userId: req.user?.id,
   });
-  await logAudit({ userId: req.user?.id, action: "create", entityType: "company", entityId: company.id, description: `Created company ${name}`, ipAddress: req.ip });
+  await logAudit({ userId: req.user?.id, action: "create", entityType: "company", entityId: company.id, description: `Created company ${name}`, ipAddress: clientIp(req) });
   res.status(201).json(await formatCompany(company));
 });
 

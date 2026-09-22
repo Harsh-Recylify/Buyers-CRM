@@ -5,6 +5,8 @@ import { db, invitationsTable, usersTable, loginLogsTable } from "@workspace/db"
 import { eq, desc, and } from "drizzle-orm";
 import { requireAuth, requireRole, signToken } from "../lib/auth";
 import { logActivity, logAudit } from "../lib/activity";
+import { sendEmail, invitationEmail } from "../lib/mailer";
+import { clientIp } from "../lib/request-ip";
 
 const router = Router();
 
@@ -114,6 +116,10 @@ router.post("/invitations", requireAuth, requireRole("super_admin", "admin"), as
     description: `Created invitation for ${normalizedEmail}`,
   });
 
+  const inviteUrl = buildInviteUrl(req, token);
+  const sent = await sendEmail({ to: normalizedEmail, ...invitationEmail(role, inviteUrl, req.user?.name ?? null) });
+  req.log.info({ sent, inviteUrl }, "Invitation created");
+
   res.status(201).json(await formatInvitation(req, inv));
 });
 
@@ -142,6 +148,10 @@ router.post("/invitations/:id/resend", requireAuth, requireRole("super_admin", "
     .set({ token, status: "pending", expiresAt, acceptedAt: null })
     .where(eq(invitationsTable.id, id))
     .returning();
+
+  const inviteUrl = buildInviteUrl(req, token);
+  const sent = await sendEmail({ to: inv.email, ...invitationEmail(inv.role, inviteUrl, req.user?.name ?? null) });
+  req.log.info({ sent, inviteUrl }, "Invitation resent");
 
   res.json(await formatInvitation(req, inv));
 });
@@ -206,7 +216,7 @@ router.post("/invitations/accept", async (req, res): Promise<void> => {
 
   await db.insert(loginLogsTable).values({
     userId: user.id,
-    ipAddress: req.ip ?? null,
+    ipAddress: clientIp(req),
     userAgent: req.headers["user-agent"] ?? null,
     status: "success",
   });
