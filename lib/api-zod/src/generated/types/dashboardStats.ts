@@ -14,6 +14,7 @@ export interface DashboardStats {
   monthlyBids: number;
   activeBuyers: number;
   activeRecyclers: number;
+  activeDeals: number;
   wonDeals: number;
   lostDeals: number;
   openDeals: number;

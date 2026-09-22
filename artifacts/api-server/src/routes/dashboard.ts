@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, companiesTable, activitiesTable, bidsTable, buyersTable, recyclersTable, tasksTable } from "@workspace/db";
-import { eq, count, sql, gte, and, isNull, desc } from "drizzle-orm";
+import { eq, sql, isNull, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -10,47 +10,39 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
   today.setHours(0, 0, 0, 0);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  const [
-    [{ todayCompanies }],
-    [{ todayActivities }],
-    [{ todayBids }],
-    [{ monthlyCompanies }],
-    [{ monthlyBids }],
-    [{ activeBuyers }],
-    [{ activeRecyclers }],
-    [{ wonDeals }],
-    [{ lostDeals }],
-    [{ openDeals }],
-    revenueRows,
-    expectedRevenueRows,
-  ] = await Promise.all([
-    db.select({ todayCompanies: count() }).from(companiesTable).where(and(gte(companiesTable.createdAt, today), isNull(companiesTable.deletedAt))),
-    db.select({ todayActivities: count() }).from(activitiesTable).where(gte(activitiesTable.createdAt, today)),
-    db.select({ todayBids: count() }).from(bidsTable).where(gte(bidsTable.createdAt, today)),
-    db.select({ monthlyCompanies: count() }).from(companiesTable).where(and(gte(companiesTable.createdAt, monthStart), isNull(companiesTable.deletedAt))),
-    db.select({ monthlyBids: count() }).from(bidsTable).where(gte(bidsTable.createdAt, monthStart)),
-    db.select({ activeBuyers: count() }).from(buyersTable).where(eq(buyersTable.status, "active")),
-    db.select({ activeRecyclers: count() }).from(recyclersTable).where(eq(recyclersTable.status, "active")),
-    db.select({ wonDeals: count() }).from(companiesTable).where(and(eq(companiesTable.stage, "Won"), isNull(companiesTable.deletedAt))),
-    db.select({ lostDeals: count() }).from(companiesTable).where(and(eq(companiesTable.stage, "Lost"), isNull(companiesTable.deletedAt))),
-    db.select({ openDeals: count() }).from(bidsTable).where(eq(bidsTable.status, "open")),
-    db.select({ total: sql<string>`COALESCE(SUM(CAST(winning_amount AS numeric)), 0)` }).from(bidsTable).where(eq(bidsTable.status, "awarded")),
-    db.select({ total: sql<string>`COALESCE(SUM(CAST(expected_revenue AS numeric)), 0)` }).from(companiesTable).where(and(isNull(companiesTable.deletedAt))),
-  ]);
+  // A single round trip (one pooled connection) instead of 12 parallel
+  // queries, which was exhausting the Supabase session-pooler connection cap.
+  const [row] = (await db.execute(sql`
+    SELECT
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND created_at >= ${today.toISOString()}) AS today_companies,
+      (SELECT COUNT(*) FROM activities WHERE created_at >= ${today.toISOString()}) AS today_activities,
+      (SELECT COUNT(*) FROM bids WHERE created_at >= ${today.toISOString()}) AS today_bids,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND created_at >= ${monthStart.toISOString()}) AS monthly_companies,
+      (SELECT COUNT(*) FROM bids WHERE created_at >= ${monthStart.toISOString()}) AS monthly_bids,
+      (SELECT COUNT(*) FROM buyers WHERE status = 'active') AS active_buyers,
+      (SELECT COUNT(*) FROM recyclers WHERE status = 'active') AS active_recyclers,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage NOT IN ('Won', 'Lost')) AS active_deals,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Won') AS won_deals,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Lost') AS lost_deals,
+      (SELECT COUNT(*) FROM bids WHERE status = 'open') AS open_deals,
+      (SELECT COALESCE(SUM(CAST(winning_amount AS numeric)), 0) FROM bids WHERE status = 'awarded') AS total_revenue,
+      (SELECT COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) FROM companies WHERE deleted_at IS NULL) AS expected_revenue
+  `)).rows as any[];
 
   res.json({
-    todayCompanies: Number(todayCompanies),
-    todayActivities: Number(todayActivities),
-    todayBids: Number(todayBids),
-    monthlyCompanies: Number(monthlyCompanies),
-    monthlyBids: Number(monthlyBids),
-    activeBuyers: Number(activeBuyers),
-    activeRecyclers: Number(activeRecyclers),
-    wonDeals: Number(wonDeals),
-    lostDeals: Number(lostDeals),
-    openDeals: Number(openDeals),
-    totalRevenue: Number(revenueRows[0]?.total ?? 0),
-    expectedRevenue: Number(expectedRevenueRows[0]?.total ?? 0),
+    todayCompanies: Number(row.today_companies),
+    todayActivities: Number(row.today_activities),
+    todayBids: Number(row.today_bids),
+    monthlyCompanies: Number(row.monthly_companies),
+    monthlyBids: Number(row.monthly_bids),
+    activeBuyers: Number(row.active_buyers),
+    activeRecyclers: Number(row.active_recyclers),
+    activeDeals: Number(row.active_deals),
+    wonDeals: Number(row.won_deals),
+    lostDeals: Number(row.lost_deals),
+    openDeals: Number(row.open_deals),
+    totalRevenue: Number(row.total_revenue),
+    expectedRevenue: Number(row.expected_revenue),
   });
 });
 

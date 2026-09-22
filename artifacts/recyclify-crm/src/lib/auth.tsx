@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import { User } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 
@@ -12,38 +12,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
+// Read localStorage synchronously on first render (not in an effect) so
+// isAuthenticated is correct on the very first paint after a reload —
+// otherwise ProtectedRoute sees isAuthenticated=false for one tick and
+// redirects to /login before the session has a chance to restore.
+function readStoredSession(): { token: string | null; user: User | null } {
+  try {
     const storedToken = localStorage.getItem("recyclify_token");
     const storedUser = localStorage.getItem("recyclify_user");
-
     if (storedToken && storedUser) {
-      try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem("recyclify_token");
-        localStorage.removeItem("recyclify_user");
-      }
+      return { token: storedToken, user: JSON.parse(storedUser) };
     }
-  }, []);
+  } catch (e) {
+    localStorage.removeItem("recyclify_token");
+    localStorage.removeItem("recyclify_user");
+  }
+  return { token: null, user: null };
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [{ token, user }, setSession] = useState(readStoredSession);
+  const [, setLocation] = useLocation();
 
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem("recyclify_token", newToken);
     localStorage.setItem("recyclify_user", JSON.stringify(newUser));
-    setToken(newToken);
-    setUser(newUser);
+    setSession({ token: newToken, user: newUser });
   };
 
   const logout = () => {
     localStorage.removeItem("recyclify_token");
     localStorage.removeItem("recyclify_user");
-    setToken(null);
-    setUser(null);
+    setSession({ token: null, user: null });
     setLocation("/login");
   };
 

@@ -11,6 +11,7 @@ search?: string;
 stage?: string;
 priority?: string;
 assignedTo?: number;
+ownerId?: number;
 status?: string;
 page?: number;
 limit?: number;

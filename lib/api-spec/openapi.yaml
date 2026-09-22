@@ -284,6 +284,10 @@ paths:
           in: query
           schema:
             type: integer
+        - name: ownerId
+          in: query
+          schema:
+            type: integer
         - name: status
           in: query
           schema:
@@ -3376,7 +3380,7 @@ components:
     # ── DASHBOARD SCHEMAS ───────────────────────────────────────────────────────
     DashboardStats:
       type: object
-      required: [todayCompanies, todayActivities, todayBids, monthlyCompanies, monthlyBids, activeBuyers, activeRecyclers, wonDeals, lostDeals, openDeals, totalRevenue, expectedRevenue]
+      required: [todayCompanies, todayActivities, todayBids, monthlyCompanies, monthlyBids, activeBuyers, activeRecyclers, activeDeals, wonDeals, lostDeals, openDeals, totalRevenue, expectedRevenue]
       properties:
         todayCompanies:
           type: integer
@@ -3391,6 +3395,8 @@ components:
         activeBuyers:
           type: integer
         activeRecyclers:
+          type: integer
+        activeDeals:
           type: integer
         wonDeals:
           type: integer

@@ -863,6 +863,7 @@ export interface DashboardStats {
   monthlyBids: number;
   activeBuyers: number;
   activeRecyclers: number;
+  activeDeals: number;
   wonDeals: number;
   lostDeals: number;
   openDeals: number;
@@ -1061,6 +1062,7 @@ search?: string;
 stage?: string;
 priority?: string;
 assignedTo?: number;
+ownerId?: number;
 status?: string;
 page?: number;
 limit?: number;
