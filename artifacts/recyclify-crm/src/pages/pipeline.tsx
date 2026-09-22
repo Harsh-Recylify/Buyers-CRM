@@ -87,7 +87,7 @@ function CompanyEditModal({
       onSuccess: () => {
         toast({ title: "Company updated" });
         queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey() });
-        queryClient.invalidateQueries({ queryKey: ["/pipeline"] });
+        queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey() });
         onClose();
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -204,7 +204,7 @@ function ManageStagesSheet({
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: stagesKey });
-    queryClient.invalidateQueries({ queryKey: ["/pipeline"] });
+    queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey() });
   }
 
   function handleAdd() {

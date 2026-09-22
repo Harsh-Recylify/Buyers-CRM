@@ -6,7 +6,7 @@ import {
   useCreateNote, useCreateTask, useListUsers,
   getGetCompanyQueryKey, getListActivitiesQueryKey, getListNotesQueryKey,
   getListTasksQueryKey, getListContactsQueryKey, getListUsersQueryKey,
-  getListCompaniesQueryKey,
+  getListCompaniesQueryKey, getGetPipelineQueryKey,
   useListCompanyBids, useCreateCompanyBid, useUpdateCompanyBid, useDeleteCompanyBid,
   getListCompanyBidsQueryKey,
   type CompanyBid,
@@ -513,6 +513,7 @@ export default function CompanyDetail() {
         toast({ title: "Company updated successfully" });
         queryClient.invalidateQueries({ queryKey: getGetCompanyQueryKey(id) });
         queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey() });
         setEditOpen(false);
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -524,6 +525,8 @@ export default function CompanyDetail() {
       onSuccess: () => {
         toast({ title: "Stage updated" });
         queryClient.invalidateQueries({ queryKey: getGetCompanyQueryKey(id) });
+        queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey() });
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
     });

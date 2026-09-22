@@ -11,6 +11,7 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import AcceptInvite from "@/pages/accept-invite";
 import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import Dashboard from "@/pages/dashboard";
 import Companies from "@/pages/companies";
 import CompanyDetail from "@/pages/company-detail";
@@ -18,6 +19,9 @@ import Pipeline from "@/pages/pipeline";
 import Buyers from "@/pages/buyers";
 import BuyerDetail from "@/pages/buyer-detail";
 import Recyclers from "@/pages/recyclers";
+import Bids from "@/pages/bids";
+import BidDetail from "@/pages/bid-detail";
+import Assets from "@/pages/assets";
 import Tasks from "@/pages/tasks";
 import Calendar from "@/pages/calendar";
 import Activities from "@/pages/activities";
@@ -43,6 +47,7 @@ function Router() {
       <Route path="/register"><Redirect to="/login" /></Route>
       <Route path="/accept-invite" component={AcceptInvite} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
 
       <ProtectedRoute path="/dashboard" component={() => <Layout><Dashboard /></Layout>} />
       <ProtectedRoute path="/companies/:id" component={() => <Layout><CompanyDetail /></Layout>} />
@@ -51,6 +56,9 @@ function Router() {
       <ProtectedRoute path="/buyers/:id" component={() => <Layout><BuyerDetail /></Layout>} />
       <ProtectedRoute path="/buyers" component={() => <Layout><Buyers /></Layout>} />
       <ProtectedRoute path="/recyclers" component={() => <Layout><Recyclers /></Layout>} />
+      <ProtectedRoute path="/bids/:id" component={() => <Layout><BidDetail /></Layout>} />
+      <ProtectedRoute path="/bids" component={() => <Layout><Bids /></Layout>} />
+      <ProtectedRoute path="/assets" component={() => <Layout><Assets /></Layout>} />
       <ProtectedRoute path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <ProtectedRoute path="/calendar" component={() => <Layout><Calendar /></Layout>} />
       <ProtectedRoute path="/activities" component={() => <Layout><Activities /></Layout>} />

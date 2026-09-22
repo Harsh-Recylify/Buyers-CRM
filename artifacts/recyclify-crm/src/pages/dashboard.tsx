@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useGetDashboardStats();
   const { data: charts, isLoading: chartsLoading } = useGetDashboardCharts();
   const { data: recent, isLoading: recentLoading } = useGetDashboardRecent();
 
@@ -17,6 +17,18 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Overview of your IT Asset Disposal pipeline and operations.</p>
       </div>
+
+      {statsError && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Couldn't load dashboard stats. The numbers below may be stale or blank.
+          </span>
+          <button className="font-medium underline underline-offset-2" onClick={() => refetchStats()}>
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statsLoading ? (
@@ -43,7 +55,7 @@ export default function Dashboard() {
                 <KanbanSquare className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.openDeals || 0}</div>
+                <div className="text-2xl font-bold">{stats?.activeDeals || 0}</div>
                 <p className="text-xs text-muted-foreground mt-1 flex items-center">
                   <span className="font-medium text-emerald-500">{(stats?.todayCompanies || 0)} new</span> this week
                 </p>
@@ -56,7 +68,7 @@ export default function Dashboard() {
                 <Gavel className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats?.todayBids || 0}</div>
+                <div className="text-2xl font-bold">{stats?.openDeals || 0}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Requiring attention
                 </p>

@@ -3,9 +3,11 @@ import { useListBids, getListBidsQueryKey } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useLocation } from "wouter";
 
 export default function Bids() {
   const { data, isLoading } = useListBids({}, { query: { queryKey: getListBidsQueryKey({}) } });
+  const [, setLocation] = useLocation();
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,7 +42,7 @@ export default function Bids() {
               </TableRow>
             ) : (
               data?.data.map((bid) => (
-                <TableRow key={bid.id}>
+                <TableRow key={bid.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setLocation(`/bids/${bid.id}`)}>
                   <TableCell className="font-medium">{bid.title}</TableCell>
                   <TableCell>{bid.companyName || '-'}</TableCell>
                   <TableCell>{bid.highestBid ? `₹${bid.highestBid.toLocaleString()}` : '-'}</TableCell>
