@@ -11,6 +11,16 @@ import fs from "node:fs";
 
 const app: Express = express();
 
+// The app sits behind Render's proxy (and Cloudflare in front of that for
+// the custom domain). Without this, Express sees every request as coming
+// from the same upstream proxy IP, so express-rate-limit below keys its
+// per-IP buckets on that one shared address — meaning ALL visitors combined
+// share a single 15-requests-per-15-minutes login budget instead of each
+// getting their own, causing unrelated users' login attempts to trip each
+// other's rate limit. Trusting the proxy lets Express read the real client
+// IP from X-Forwarded-For instead.
+app.set("trust proxy", true);
+
 // Security Headers (relaxed CSP so SPA assets & fonts load smoothly)
 app.use(
   helmet({
