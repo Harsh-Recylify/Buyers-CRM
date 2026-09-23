@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, tasksTable, taskCommentsTable, usersTable } from "@workspace/db";
-import { eq, and, count, desc } from "drizzle-orm";
+import { db, tasksTable, taskCommentsTable, usersTable, companiesTable } from "@workspace/db";
+import { eq, and, count, desc, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
 
@@ -12,6 +12,10 @@ async function formatTask(t: typeof tasksTable.$inferSelect) {
   if (t.assignedToId) {
     const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, t.assignedToId));
     assignedToName = user?.name ?? null;
+  }
+  if (t.entityType === "company" && t.entityId) {
+    const [company] = await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, t.entityId));
+    entityName = company?.name ?? null;
   }
   return {
     id: t.id, title: t.title, description: t.description,
@@ -27,13 +31,17 @@ router.get("/tasks", requireAuth, async (req, res): Promise<void> => {
   const { page, limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const q = req.query as Record<string, string>;
 
-  let conditions: any[] = [];
+  // Exclude tasks linked to a company that's since been soft-deleted —
+  // otherwise they keep showing on the Tasks board and Calendar forever.
+  let conditions: any[] = [
+    sql`NOT (${tasksTable.entityType} = 'company' AND EXISTS (SELECT 1 FROM companies c WHERE c.id = ${tasksTable.entityId} AND c.deleted_at IS NOT NULL))`,
+  ];
   if (q.assignedTo) conditions.push(eq(tasksTable.assignedToId, parseInt(q.assignedTo, 10)));
   if (q.status) conditions.push(eq(tasksTable.status, q.status));
   if (q.priority) conditions.push(eq(tasksTable.priority, q.priority));
   if (q.entityType) conditions.push(eq(tasksTable.entityType, q.entityType));
   if (q.entityId) conditions.push(eq(tasksTable.entityId, parseInt(q.entityId, 10)));
-  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const where = and(...conditions);
 
   const [rows, [{ count: total }]] = await Promise.all([
     db.select().from(tasksTable).where(where).limit(limit).offset(offset).orderBy(desc(tasksTable.createdAt)),

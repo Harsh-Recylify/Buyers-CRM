@@ -93,6 +93,10 @@ router.get("/dashboard/charts", requireAuth, async (req, res): Promise<void> => 
            COALESCE(SUM(CAST(bq.amount AS numeric)), 0) as "wonAmount"
     FROM buyers b
     LEFT JOIN bid_quotes bq ON bq.buyer_id = b.id AND bq.status = 'accepted'
+      AND EXISTS (
+        SELECT 1 FROM bids bd JOIN companies c ON c.id = bd.company_id
+        WHERE bd.id = bq.bid_id AND c.deleted_at IS NULL
+      )
     GROUP BY b.id, b.name ORDER BY b.won_bids DESC LIMIT 5
   `);
   const topBuyers = (topBuyersRows.rows as any[]).map(r => ({ id: Number(r.id), name: r.name, bids: Number(r.bids), wonAmount: Number(r.wonAmount) }));
@@ -123,7 +127,9 @@ router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => 
     db.select().from(bidsTable)
       .where(sql`EXISTS (SELECT 1 FROM companies c WHERE c.id = ${bidsTable.companyId} AND c.deleted_at IS NULL)`)
       .orderBy(desc(bidsTable.createdAt)).limit(5),
-    db.select().from(tasksTable).where(eq(tasksTable.status, "todo")).orderBy(tasksTable.dueDate).limit(5),
+    db.select().from(tasksTable)
+      .where(sql`${tasksTable.status} = 'todo' AND NOT (${tasksTable.entityType} = 'company' AND EXISTS (SELECT 1 FROM companies c WHERE c.id = ${tasksTable.entityId} AND c.deleted_at IS NOT NULL))`)
+      .orderBy(tasksTable.dueDate).limit(5),
   ]);
 
   const activityUserIds = [...new Set(recentActivities.map(a => a.userId).filter((id): id is number => id != null))];

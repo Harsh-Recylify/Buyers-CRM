@@ -64,11 +64,18 @@ router.get("/reports/bids", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get("/reports/buyers", requireAuth, async (req, res): Promise<void> => {
+  // The bq -> bids -> companies chain is joined and filtered so a quote on a
+  // bid whose company was later soft-deleted stops counting toward this
+  // buyer's total — otherwise the amount only ever grows, never corrects.
   const rows = await db.execute(sql`
     SELECT b.id, b.name, b.total_bids, b.won_bids,
            COALESCE(SUM(CAST(bq.amount AS numeric)), 0) as total_amount
     FROM buyers b
     LEFT JOIN bid_quotes bq ON bq.buyer_id = b.id AND bq.status = 'accepted'
+      AND EXISTS (
+        SELECT 1 FROM bids bd JOIN companies c ON c.id = bd.company_id
+        WHERE bd.id = bq.bid_id AND c.deleted_at IS NULL
+      )
     GROUP BY b.id, b.name, b.total_bids, b.won_bids
     ORDER BY b.won_bids DESC
   `);
