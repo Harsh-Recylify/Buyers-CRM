@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { Layout } from "@/components/layout";
 import NotFound from "@/pages/not-found";
 
+import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import AcceptInvite from "@/pages/accept-invite";
 import ForgotPassword from "@/pages/forgot-password";
@@ -68,7 +69,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={() => <Layout><Settings /></Layout>} />
       <ProtectedRoute path="/profile" component={() => <Layout><Profile /></Layout>} />
 
-      <ProtectedRoute path="/" component={() => <Layout><Dashboard /></Layout>} />
+      <Route path="/" component={Landing} />
       <Route component={NotFound} />
     </Switch>
   );
