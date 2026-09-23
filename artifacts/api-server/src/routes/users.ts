@@ -61,12 +61,31 @@ router.get("/users/:id", requireAuth, requireRole("admin", "super_admin"), async
   res.json(formatUser(user));
 });
 
-router.patch("/users/:id", requireAuth, requireRole("admin", "super_admin"), async (req, res): Promise<void> => {
+router.patch("/users/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!existing) { res.status(404).json({ error: "User not found" }); return; }
-  if (existing.isProtected && req.user?.id !== id) {
-    res.status(403).json({ error: "Cannot modify protected super admin" });
+
+  const isSelf = req.user?.id === id;
+  const isAdmin = req.user?.role === "admin" || req.user?.role === "super_admin";
+  if (existing.isProtected) {
+    // The protected seed account may always manage itself — including
+    // demoting or deactivating itself — even after it no longer holds an
+    // admin role. Anyone else, regardless of their own role, is blocked.
+    // (Deliberately NOT "isSelf || isAdmin": self-service here is a special
+    // allowance for this one seeded account, not a general rule — a normal
+    // user must still go through /auth/profile for their own info, and must
+    // not be able to edit their own role/status via this admin endpoint.)
+    if (!isSelf) {
+      res.status(403).json({ error: "Cannot modify protected super admin" });
+      return;
+    }
+  } else if (!isAdmin) {
+    // Non-protected accounts: only admins/super admins may use this
+    // endpoint at all, for themselves or anyone else — unchanged from
+    // before. Self-service for regular users is handled by /auth/profile,
+    // which can't touch role/status.
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
   const { name, email, role, status, phone, department } = req.body;
