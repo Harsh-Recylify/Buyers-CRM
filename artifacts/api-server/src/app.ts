@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import healthRouter from "./routes/health";
 import { logger } from "./lib/logger";
 import { clientIp } from "./lib/request-ip";
 
@@ -70,6 +71,13 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Health checks (Render's own liveness probe, and any external uptime/keep-alive
+// pinger) must never be rate limited. They're infra-internal, expected to be
+// frequent, and getting a 429 here makes Render think the whole service is
+// down — it has actually flagged "server failure" over this before. Mounted
+// ahead of the rate limiters below so it never touches that budget.
+app.use("/api", healthRouter);
 
 // Rate Limiters
 const apiLimiter = rateLimit({
