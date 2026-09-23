@@ -39,10 +39,13 @@ router.get("/bids", requireAuth, async (req, res): Promise<void> => {
   const { page, limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const q = req.query as Record<string, string>;
 
-  let conditions: any[] = [];
+  // Exclude bids belonging to a soft-deleted company — otherwise a deleted
+  // company's old bids keep showing up here (and inflating dashboard counts
+  // like "Open Bids") even though the company itself is gone everywhere else.
+  let conditions: any[] = [sql`EXISTS (SELECT 1 FROM companies c WHERE c.id = ${bidsTable.companyId} AND c.deleted_at IS NULL)`];
   if (q.companyId) conditions.push(eq(bidsTable.companyId, parseInt(q.companyId, 10)));
   if (q.status) conditions.push(eq(bidsTable.status, q.status));
-  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const where = and(...conditions);
 
   const [rows, [{ count: total }]] = await Promise.all([
     db.select().from(bidsTable).where(where).limit(limit).offset(offset).orderBy(desc(bidsTable.createdAt)),

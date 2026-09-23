@@ -12,20 +12,23 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
 
   // A single round trip (one pooled connection) instead of 12 parallel
   // queries, which was exhausting the Supabase session-pooler connection cap.
+  // Every bids-derived figure excludes bids whose company was soft-deleted —
+  // bids has no deleted_at of its own, so without this a deleted company's
+  // old bids keep inflating "Open Bids" and revenue forever.
   const [row] = (await db.execute(sql`
     SELECT
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND created_at >= ${today.toISOString()}) AS today_companies,
       (SELECT COUNT(*) FROM activities WHERE created_at >= ${today.toISOString()}) AS today_activities,
-      (SELECT COUNT(*) FROM bids WHERE created_at >= ${today.toISOString()}) AS today_bids,
+      (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.created_at >= ${today.toISOString()}) AS today_bids,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND created_at >= ${monthStart.toISOString()}) AS monthly_companies,
-      (SELECT COUNT(*) FROM bids WHERE created_at >= ${monthStart.toISOString()}) AS monthly_bids,
+      (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.created_at >= ${monthStart.toISOString()}) AS monthly_bids,
       (SELECT COUNT(*) FROM buyers WHERE status = 'active') AS active_buyers,
       (SELECT COUNT(*) FROM recyclers WHERE status = 'active') AS active_recyclers,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage NOT IN ('Won', 'Lost')) AS active_deals,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Won') AS won_deals,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Lost') AS lost_deals,
-      (SELECT COUNT(*) FROM bids WHERE status = 'open') AS open_deals,
-      (SELECT COALESCE(SUM(CAST(winning_amount AS numeric)), 0) FROM bids WHERE status = 'awarded') AS total_revenue,
+      (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'open') AS open_deals,
+      (SELECT COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'awarded') AS total_revenue,
       (SELECT COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) FROM companies WHERE deleted_at IS NULL) AS expected_revenue
   `)).rows as any[];
 
@@ -58,11 +61,11 @@ router.get("/dashboard/charts", requireAuth, async (req, res): Promise<void> => 
   `);
 
   const monthlyBidValue = await db.execute(sql`
-    SELECT TO_CHAR(created_at, 'Mon YYYY') as month,
-           DATE_TRUNC('month', created_at) as month_start,
-           COALESCE(SUM(CAST(winning_amount AS numeric)), 0) as value
-    FROM bids
-    WHERE created_at >= NOW() - INTERVAL '6 months'
+    SELECT TO_CHAR(b.created_at, 'Mon YYYY') as month,
+           DATE_TRUNC('month', b.created_at) as month_start,
+           COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) as value
+    FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL
+    WHERE b.created_at >= NOW() - INTERVAL '6 months'
     GROUP BY month, month_start ORDER BY month_start ASC
   `);
 
@@ -79,7 +82,9 @@ router.get("/dashboard/charts", requireAuth, async (req, res): Promise<void> => 
   }));
 
   const bidStatusRows = await db.execute(sql`
-    SELECT status, COUNT(*) as count FROM bids GROUP BY status
+    SELECT b.status, COUNT(*) as count
+    FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL
+    GROUP BY b.status
   `);
   const bidStatus = (bidStatusRows.rows as any[]).map(r => ({ status: r.status, count: Number(r.count) }));
 
@@ -115,7 +120,9 @@ router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => 
   const [recentActivities, recentCompanies, recentBids, upcomingFollowUps] = await Promise.all([
     db.select().from(activitiesTable).orderBy(desc(activitiesTable.createdAt)).limit(10),
     db.select().from(companiesTable).where(isNull(companiesTable.deletedAt)).orderBy(desc(companiesTable.createdAt)).limit(5),
-    db.select().from(bidsTable).orderBy(desc(bidsTable.createdAt)).limit(5),
+    db.select().from(bidsTable)
+      .where(sql`EXISTS (SELECT 1 FROM companies c WHERE c.id = ${bidsTable.companyId} AND c.deleted_at IS NULL)`)
+      .orderBy(desc(bidsTable.createdAt)).limit(5),
     db.select().from(tasksTable).where(eq(tasksTable.status, "todo")).orderBy(tasksTable.dueDate).limit(5),
   ]);
 

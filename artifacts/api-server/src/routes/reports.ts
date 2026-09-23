@@ -41,14 +41,17 @@ router.get("/reports/bids", requireAuth, async (req, res): Promise<void> => {
   const period = (req.query.period as string) || "monthly";
   const since = getPeriodStart(period);
 
+  // Every query here joins against companies and excludes soft-deleted ones —
+  // bids has no deleted_at of its own, so without this a deleted company's
+  // old bids would keep inflating these figures forever.
   const [bidsRows, statusRows, valueRows] = await Promise.all([
-    db.execute(sql`SELECT COUNT(*) as total, COUNT(CASE WHEN status='open' THEN 1 END) as open_bids, COUNT(CASE WHEN status='awarded' THEN 1 END) as awarded FROM bids WHERE created_at >= ${since.toISOString()}`),
-    db.execute(sql`SELECT status, COUNT(*) as count, COALESCE(SUM(CAST(winning_amount AS numeric)), 0) as value FROM bids WHERE created_at >= ${since.toISOString()} GROUP BY status`),
-    db.execute(sql`SELECT COALESCE(AVG(CAST(winning_amount AS numeric)), 0) as avg_bid_value FROM bids WHERE status='awarded' AND created_at >= ${since.toISOString()}`),
+    db.execute(sql`SELECT COUNT(*) as total, COUNT(CASE WHEN b.status='open' THEN 1 END) as open_bids, COUNT(CASE WHEN b.status='awarded' THEN 1 END) as awarded FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.created_at >= ${since.toISOString()}`),
+    db.execute(sql`SELECT b.status, COUNT(*) as count, COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) as value FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.created_at >= ${since.toISOString()} GROUP BY b.status`),
+    db.execute(sql`SELECT COALESCE(AVG(CAST(b.winning_amount AS numeric)), 0) as avg_bid_value FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status='awarded' AND b.created_at >= ${since.toISOString()}`),
   ]);
 
   const totals = bidsRows.rows[0] as any;
-  const awardedRows = await db.execute(sql`SELECT COALESCE(SUM(CAST(winning_amount AS numeric)), 0) as total_value FROM bids WHERE status='awarded' AND created_at >= ${since.toISOString()}`);
+  const awardedRows = await db.execute(sql`SELECT COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) as total_value FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status='awarded' AND b.created_at >= ${since.toISOString()}`);
 
   res.json({
     totalBids: Number(totals.total),

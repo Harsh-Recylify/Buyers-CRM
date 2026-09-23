@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, companiesTable, buyersTable, recyclersTable, usersTable, tasksTable, activitiesTable, bidsTable } from "@workspace/db";
-import { ilike, or, isNull } from "drizzle-orm";
+import { ilike, or, isNull, and, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -36,7 +36,10 @@ router.get("/search", requireAuth, async (req, res): Promise<void> => {
       .limit(5),
     db.select({ id: bidsTable.id, title: bidsTable.title, status: bidsTable.status })
       .from(bidsTable)
-      .where(ilike(bidsTable.title, pattern) as any)
+      .where(and(
+        ilike(bidsTable.title, pattern),
+        sql`EXISTS (SELECT 1 FROM companies c WHERE c.id = ${bidsTable.companyId} AND c.deleted_at IS NULL)`,
+      ) as any)
       .limit(5),
   ]);
 
