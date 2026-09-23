@@ -104,6 +104,10 @@ router.delete("/users/:id", requireAuth, requireRole("admin", "super_admin"), as
     res.status(403).json({ error: "Cannot delete protected super admin" });
     return;
   }
+  if (req.user?.id === id) {
+    res.status(403).json({ error: "You can't delete your own account" });
+    return;
+  }
   await db.delete(usersTable).where(eq(usersTable.id, id));
   res.sendStatus(204);
 });
