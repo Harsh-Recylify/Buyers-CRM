@@ -88,6 +88,11 @@ router.patch("/bids/:id", requireAuth, async (req, res): Promise<void> => {
 
 router.delete("/bids/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  // No DB-level cascade exists (these are loose integer columns, not FKs), so
+  // quotes/history have to be cleaned up explicitly or they're left orphaned
+  // pointing at a bid_id that no longer exists.
+  await db.delete(bidQuotesTable).where(eq(bidQuotesTable.bidId, id));
+  await db.delete(bidHistoryTable).where(eq(bidHistoryTable.bidId, id));
   await db.delete(bidsTable).where(eq(bidsTable.id, id));
   res.sendStatus(204);
 });
