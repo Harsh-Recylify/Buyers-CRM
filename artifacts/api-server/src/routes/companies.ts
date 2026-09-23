@@ -80,7 +80,11 @@ router.post("/companies", requireAuth, async (req, res): Promise<void> => {
 router.get("/companies/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, id));
-  if (!company) { res.status(404).json({ error: "Company not found" }); return; }
+  // A deleted company is 404, same as one that never existed — there's no
+  // restore/trash view in the UI, so serving it up would only let a stale
+  // link (search results, an old bid, etc.) render an archived company as
+  // if it were live.
+  if (!company || company.deletedAt) { res.status(404).json({ error: "Company not found" }); return; }
   res.json(await formatCompany(company));
 });
 

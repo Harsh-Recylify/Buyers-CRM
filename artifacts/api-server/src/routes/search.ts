@@ -16,7 +16,7 @@ router.get("/search", requireAuth, async (req, res): Promise<void> => {
   const [companies, buyers, recyclers, users, tasks, bids] = await Promise.all([
     db.select({ id: companiesTable.id, name: companiesTable.name, industry: companiesTable.industry })
       .from(companiesTable)
-      .where(ilike(companiesTable.name, pattern) as any)
+      .where(and(ilike(companiesTable.name, pattern), isNull(companiesTable.deletedAt)) as any)
       .limit(5),
     db.select({ id: buyersTable.id, name: buyersTable.name, company: buyersTable.company })
       .from(buyersTable)
