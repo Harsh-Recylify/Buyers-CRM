@@ -42,7 +42,7 @@ export default function Bids() {
               </TableRow>
             ) : (
               data?.data.map((bid) => (
-                <TableRow key={bid.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setLocation(`/bids/${bid.id}`)}>
+                <TableRow key={bid.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setLocation(`/companies/${bid.companyId}`)}>
                   <TableCell className="font-medium">{bid.title}</TableCell>
                   <TableCell>{bid.companyName || '-'}</TableCell>
                   <TableCell>{bid.highestBid ? `₹${bid.highestBid.toLocaleString()}` : '-'}</TableCell>
