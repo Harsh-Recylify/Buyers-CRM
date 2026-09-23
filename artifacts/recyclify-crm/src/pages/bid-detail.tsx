@@ -1,8 +1,9 @@
 import React from "react";
 import { useParams, Link } from "wouter";
 import {
-  useGetBid, useListBidQuotes, useGetBidHistory, useAddBidQuote, useAwardBid,
-  getGetBidQueryKey, getListBidQuotesQueryKey, getGetBidHistoryQueryKey,
+  useGetBid, useListBidQuotes, useGetBidHistory, useAddBidQuote, useAwardBid, useListBuyers,
+  getGetBidQueryKey, getListBidQuotesQueryKey, getGetBidHistoryQueryKey, getListBidsQueryKey, getListBuyersQueryKey,
+  getListAllCompanyBidsQueryKey, getGetDashboardStatsQueryKey, getGetDashboardChartsQueryKey, getGetDashboardRecentQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +42,14 @@ function AddQuoteDialog({ bidId, onSuccess }: { bidId: number; onSuccess: () => 
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const addQuote = useAddBidQuote();
-  const { register, handleSubmit, reset } = useForm({ defaultValues: { buyerId: "", amount: "", notes: "" } });
+  const buyersParams = { status: "active" };
+  const { data: buyersData } = useListBuyers(
+    buyersParams,
+    { query: { enabled: open, queryKey: getListBuyersQueryKey(buyersParams) } }
+  );
+  const buyers = buyersData?.data ?? [];
+  const { register, handleSubmit, reset, setValue, watch } = useForm({ defaultValues: { buyerId: "", amount: "", notes: "" } });
+  const buyerId = watch("buyerId");
 
   function onSubmit(data: any) {
     addQuote.mutate(
@@ -66,8 +75,13 @@ function AddQuoteDialog({ bidId, onSuccess }: { bidId: number; onSuccess: () => 
         <DialogHeader><DialogTitle>Add Buyer Quote</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <Label>Buyer ID</Label>
-            <Input type="number" placeholder="Enter buyer ID" {...register("buyerId", { required: true })} />
+            <Label>Buyer</Label>
+            <Select value={buyerId} onValueChange={(v) => setValue("buyerId", v)}>
+              <SelectTrigger><SelectValue placeholder="Select a buyer" /></SelectTrigger>
+              <SelectContent>
+                {buyers.map((b: any) => <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label>Quote Amount (₹)</Label>
@@ -79,7 +93,7 @@ function AddQuoteDialog({ bidId, onSuccess }: { bidId: number; onSuccess: () => 
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-[#118847] hover:bg-[#0e7038]" disabled={addQuote.isPending}>
+            <Button type="submit" className="bg-[#118847] hover:bg-[#0e7038]" disabled={addQuote.isPending || !buyerId}>
               {addQuote.isPending ? "Adding..." : "Add Quote"}
             </Button>
           </DialogFooter>
@@ -107,21 +121,32 @@ export default function BidDetail() {
 
   const awardBid = useAwardBid();
 
+  // Shared by award + add-quote: both change data that the standalone Bids
+  // list and Dashboard stats/charts also derive from, not just this page.
+  function invalidateBidEverywhere() {
+    queryClient.invalidateQueries({ queryKey: getGetBidQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getListBidQuotesQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getGetBidHistoryQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getListBidsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListAllCompanyBidsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetDashboardChartsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetDashboardRecentQueryKey() });
+  }
+
   function handleAward(buyerId: number, amount: number, buyerName: string) {
     if (!confirm(`Award bid to ${buyerName} for ₹${amount.toLocaleString("en-IN")}?`)) return;
     awardBid.mutate({ id, data: { buyerId, amount } }, {
       onSuccess: () => {
         toast({ title: "Bid awarded successfully" });
-        queryClient.invalidateQueries({ queryKey: getGetBidQueryKey(id) });
-        queryClient.invalidateQueries({ queryKey: getListBidQuotesQueryKey(id) });
+        invalidateBidEverywhere();
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
     });
   }
 
   function handleQuoteSuccess() {
-    queryClient.invalidateQueries({ queryKey: getListBidQuotesQueryKey(id) });
-    queryClient.invalidateQueries({ queryKey: getGetBidQueryKey(id) });
+    invalidateBidEverywhere();
   }
 
   if (isLoading) {
