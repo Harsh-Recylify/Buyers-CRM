@@ -1,9 +1,9 @@
 import React from "react";
 import {
   useListUsers, useCreateUser, useDeleteUser,
-  useListAuditLogs, useListLoginLogs, useGetAppSettings, useUpdateAppSettings,
+  useListAuditLogs, useGetAppSettings, useUpdateAppSettings,
   useListInvitations, useCreateInvitation, useRevokeInvitation, useResendInvitation,
-  getListUsersQueryKey, getListAuditLogsQueryKey, getListLoginLogsQueryKey, getGetAppSettingsQueryKey,
+  getListUsersQueryKey, getListAuditLogsQueryKey, getGetAppSettingsQueryKey,
   getListInvitationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ShieldAlert, Users, ClipboardList, LogIn, Settings, Save, Mail, Copy, Check, RefreshCw, Send } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, Users, ClipboardList, Settings, Save, Mail, Copy, Check, RefreshCw, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const ROLES = ["super_admin", "admin", "manager", "team_member"];
@@ -433,11 +433,9 @@ export default function Admin() {
 
   const { data: usersData, isLoading: usersLoading } = useListUsers({}, { query: { queryKey: getListUsersQueryKey({}) } });
   const { data: auditData, isLoading: auditLoading } = useListAuditLogs({}, { query: { queryKey: getListAuditLogsQueryKey({}) } });
-  const { data: loginData, isLoading: loginLoading } = useListLoginLogs({}, { query: { queryKey: getListLoginLogsQueryKey({}) } });
 
   const users = (usersData as any)?.data ?? [];
   const auditLogs = (auditData as any)?.data ?? [];
-  const loginLogs = (loginData as any)?.data ?? [];
 
   const deleteUserMutation = useDeleteUser();
 
@@ -474,7 +472,6 @@ export default function Admin() {
           <TabsTrigger value="users" className="gap-2"><Users className="h-4 w-4" />Users</TabsTrigger>
           <TabsTrigger value="invites" className="gap-2"><Mail className="h-4 w-4" />Invites</TabsTrigger>
           <TabsTrigger value="audit" className="gap-2"><ClipboardList className="h-4 w-4" />Audit Logs</TabsTrigger>
-          <TabsTrigger value="logins" className="gap-2"><LogIn className="h-4 w-4" />Login Logs</TabsTrigger>
           <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" />Settings</TabsTrigger>
         </TabsList>
 
@@ -571,47 +568,6 @@ export default function Admin() {
                   ))}
                   {!auditLoading && auditLogs.length === 0 && (
                     <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No audit logs found</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="logins" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Login History ({(loginData as any)?.meta?.total ?? 0} entries)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>IP Address</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loginLoading ? Array(5).fill(0).map((_, i) => (
-                    <TableRow key={i}>{Array(5).fill(0).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-24" /></TableCell>)}</TableRow>
-                  )) : loginLogs.map((log: any) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="font-medium">{log.userName ?? "Unknown"}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{log.userEmail ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm font-mono">{log.ipAddress ?? "—"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={log.status === "success" ? "text-green-700 border-green-200" : "text-red-700 border-red-200"}>
-                          {log.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{timeAgo(log.createdAt)}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!loginLoading && loginLogs.length === 0 && (
-                    <TableRow><TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No login logs found</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
