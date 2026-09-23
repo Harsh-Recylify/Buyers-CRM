@@ -82,7 +82,7 @@ app.use("/api", healthRouter);
 // Rate Limiters
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 200, // Limit each IP to 200 requests per 15 minutes
+  limit: 1000, // Limit each IP to 1000 requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => ipKeyGenerator(clientIp(req)),
