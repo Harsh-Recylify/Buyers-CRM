@@ -80,7 +80,12 @@ router.patch("/buyers/:id", requireAuth, async (req, res): Promise<void> => {
 
 router.delete("/buyers/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  await db.delete(buyersTable).where(eq(buyersTable.id, id));
+  // Deactivate, don't hard-delete — the confirmation dialog promises "this
+  // action will deactivate the buyer, bid history will be preserved", but a
+  // real delete here would silently orphan bid_quotes.buyer_id and
+  // bids.winning_buyer_id on every bid this buyer was ever involved in.
+  const [buyer] = await db.update(buyersTable).set({ status: "inactive" }).where(eq(buyersTable.id, id)).returning();
+  if (!buyer) { res.status(404).json({ error: "Buyer not found" }); return; }
   res.sendStatus(204);
 });
 

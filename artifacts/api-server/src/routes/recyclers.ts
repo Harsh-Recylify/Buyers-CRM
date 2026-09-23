@@ -69,7 +69,11 @@ router.patch("/recyclers/:id", requireAuth, async (req, res): Promise<void> => {
 
 router.delete("/recyclers/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  await db.delete(recyclersTable).where(eq(recyclersTable.id, id));
+  // Deactivate, don't hard-delete — matches the confirmation dialog's copy
+  // ("this will deactivate the recycler partner") and avoids orphaning any
+  // historical records that reference this recycler.
+  const [recycler] = await db.update(recyclersTable).set({ status: "inactive" }).where(eq(recyclersTable.id, id)).returning();
+  if (!recycler) { res.status(404).json({ error: "Recycler not found" }); return; }
   res.sendStatus(204);
 });
 
