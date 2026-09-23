@@ -26,13 +26,20 @@ export default function Settings() {
   const profileForm = useForm({ defaultValues: { name: "", phone: "", department: "" } });
   const passwordForm = useForm({ defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" } });
 
+  // Populate the form once, the first time `me` loads — not on every
+  // background refetch. This query is shared with ProtectedRoute (mounted
+  // on every page) and refetches on window focus / staleness, getting a
+  // brand-new object reference each time even when nothing changed.
+  // Resetting on every such change was wiping out in-progress edits here.
+  const profileInitialized = React.useRef(false);
   React.useEffect(() => {
-    if (me) {
+    if (me && !profileInitialized.current) {
       profileForm.reset({
         name: me.name ?? "",
         phone: (me as any).phone ?? "",
         department: (me as any).department ?? "",
       });
+      profileInitialized.current = true;
     }
   }, [me]);
 

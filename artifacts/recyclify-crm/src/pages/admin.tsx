@@ -127,6 +127,14 @@ function EditUserDialog({ targetUser, onSuccess }: { targetUser: any; onSuccess:
   });
   const updateUser = useUpdateUser();
 
+  // Deliberately keyed on `open` and the user's id only — NOT the whole
+  // targetUser object. That object gets a brand-new reference every time the
+  // background user-list query refetches (e.g. on window focus, or once it
+  // goes stale after 30s), even when nothing actually changed. Resetting on
+  // every such reference change was wiping out whatever was being typed
+  // mid-edit — this only re-syncs when the dialog is freshly opened, or
+  // opened for a different user.
+  const targetUserId = targetUser.id;
   React.useEffect(() => {
     if (open) {
       reset({
@@ -134,7 +142,8 @@ function EditUserDialog({ targetUser, onSuccess }: { targetUser: any; onSuccess:
         status: targetUser.status, department: targetUser.department ?? "", password: "",
       });
     }
-  }, [open, targetUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, targetUserId]);
 
   function onSubmit(data: any) {
     const { password, ...rest } = data;
@@ -213,8 +222,17 @@ function SettingsTab() {
   const { toast } = useToast();
   const { register, handleSubmit, reset } = useForm();
 
+  // Populate the form once, the first time settings load — not on every
+  // background refetch. `settings` gets a brand-new object reference each
+  // time the query refetches (e.g. on window focus), even when nothing
+  // actually changed; resetting on every such change was wiping out
+  // whatever was being typed mid-edit.
+  const initialized = React.useRef(false);
   React.useEffect(() => {
-    if (settings) reset(settings as any);
+    if (settings && !initialized.current) {
+      reset(settings as any);
+      initialized.current = true;
+    }
   }, [settings]);
 
   function onSubmit(data: any) {

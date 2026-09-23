@@ -397,6 +397,19 @@ export default function Tasks() {
     };
   }
 
+  // Memoized so it only changes when the task being edited actually changes
+  // (editTask is stable local state) — not on every re-render of this page,
+  // which happens often (notification polling, other query refetches, etc.)
+  // Passing a fresh object on every render was resetting the edit form
+  // mid-typing, since TaskFormModal re-syncs whenever `initialForm` changes.
+  const editTaskInitialForm = React.useMemo(
+    () => (editTask ? editFormFrom(editTask) : emptyForm()),
+    [editTask]
+  );
+  // Same reasoning for the create form: a stable reference for the whole
+  // time the create dialog can be open, instead of a new one every render.
+  const createInitialForm = React.useMemo(() => emptyForm(), []);
+
   const tasksByStatus = STATUSES.reduce((acc, s) => {
     acc[s] = tasks.filter(t => t.status === s);
     return acc;
@@ -526,7 +539,7 @@ export default function Tasks() {
       <TaskFormModal
         open={createOpen}
         onOpenChange={setCreateOpen}
-        initialForm={emptyForm()}
+        initialForm={createInitialForm}
         onSubmit={handleCreate}
         isPending={createTask.isPending}
         isEdit={false}
@@ -539,7 +552,7 @@ export default function Tasks() {
         <TaskFormModal
           open={!!editTask}
           onOpenChange={v => { if (!v) setEditTask(null); }}
-          initialForm={editFormFrom(editTask)}
+          initialForm={editTaskInitialForm}
           onSubmit={handleEdit}
           isPending={updateTask.isPending}
           isEdit={true}
