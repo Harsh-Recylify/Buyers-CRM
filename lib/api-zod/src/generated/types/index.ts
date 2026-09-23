@@ -41,6 +41,8 @@ export * from './companyBid';
 export * from './companyBidInput';
 export * from './companyBidListResponse';
 export * from './companyBidUpdate';
+export * from './companyBidWithCompany';
+export * from './companyBidWithCompanyListResponse';
 export * from './companyInput';
 export * from './companyListResponse';
 export * from './companyUpdate';

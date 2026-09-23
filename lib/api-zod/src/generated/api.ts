@@ -517,6 +517,32 @@ export const RestoreCompanyResponse = zod.object({
 })
 
 
+/**
+ * All company bids across every company (not soft-deleted), for the global Bids view.
+ */
+export const ListAllCompanyBidsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.number(),
+  "companyId": zod.number(),
+  "buyerCompany": zod.string(),
+  "contactPerson": zod.string().nullish(),
+  "mobile": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "bidAmount": zod.number(),
+  "location": zod.string().nullish(),
+  "pickupTimeline": zod.string().nullish(),
+  "paymentTerms": zod.string().nullish(),
+  "remarks": zod.string().nullish(),
+  "status": zod.string(),
+  "createdById": zod.number().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string().optional()
+}).and(zod.object({
+  "companyName": zod.string().nullable()
+})))
+})
+
+
 export const ListCompanyBidsParams = zod.object({
   "companyId": zod.coerce.number()
 })

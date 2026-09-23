@@ -785,6 +785,15 @@ export interface CompanyBidListResponse {
   data: CompanyBid[];
 }
 
+export type CompanyBidWithCompany = CompanyBid & ({
+  /** @nullable */
+  companyName: string | null;
+});
+
+export interface CompanyBidWithCompanyListResponse {
+  data: CompanyBidWithCompany[];
+}
+
 export interface CompanyBidInput {
   buyerCompany: string;
   contactPerson?: string;

@@ -1,10 +1,48 @@
 import { Router } from "express";
-import { db, companyBidsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { db, companyBidsTable, companiesTable } from "@workspace/db";
+import { eq, desc, isNull } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { logActivity } from "../lib/activity";
 
 const router = Router();
+
+// All company bids across every (non-deleted) company — powers the global
+// Bids view, which otherwise only showed the separate, unrelated `bids`
+// table and never surfaced bids added directly from a company's own page.
+router.get("/company-bids", requireAuth, async (_req, res): Promise<void> => {
+  const rows = await db
+    .select({
+      id: companyBidsTable.id,
+      companyId: companyBidsTable.companyId,
+      buyerCompany: companyBidsTable.buyerCompany,
+      contactPerson: companyBidsTable.contactPerson,
+      mobile: companyBidsTable.mobile,
+      email: companyBidsTable.email,
+      bidAmount: companyBidsTable.bidAmount,
+      location: companyBidsTable.location,
+      pickupTimeline: companyBidsTable.pickupTimeline,
+      paymentTerms: companyBidsTable.paymentTerms,
+      remarks: companyBidsTable.remarks,
+      status: companyBidsTable.status,
+      createdById: companyBidsTable.createdById,
+      createdAt: companyBidsTable.createdAt,
+      updatedAt: companyBidsTable.updatedAt,
+      companyName: companiesTable.name,
+    })
+    .from(companyBidsTable)
+    .innerJoin(companiesTable, eq(companiesTable.id, companyBidsTable.companyId))
+    .where(isNull(companiesTable.deletedAt))
+    .orderBy(desc(companyBidsTable.createdAt));
+
+  const data = rows.map(r => ({
+    ...r,
+    bidAmount: Number(r.bidAmount),
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+
+  res.json({ data });
+});
 
 router.get("/companies/:companyId/company-bids", requireAuth, async (req, res): Promise<void> => {
   const companyId = parseInt(req.params["companyId"] as string, 10);

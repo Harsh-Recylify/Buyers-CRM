@@ -427,6 +427,19 @@ paths:
                 $ref: "#/components/schemas/Company"
 
   # ── COMPANY BIDS ─────────────────────────────────────────────────────────────
+  /company-bids:
+    get:
+      operationId: listAllCompanyBids
+      tags: [companies]
+      description: All company bids across every company (not soft-deleted), for the global Bids view.
+      responses:
+        "200":
+          description: List of all company bids
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyBidWithCompanyListResponse"
+
   /companies/{companyId}/company-bids:
     get:
       operationId: listCompanyBids
@@ -3247,6 +3260,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CompanyBid"
+
+    CompanyBidWithCompany:
+      allOf:
+        - $ref: "#/components/schemas/CompanyBid"
+        - type: object
+          required: [companyName]
+          properties:
+            companyName:
+              type: ["string", "null"]
+
+    CompanyBidWithCompanyListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyBidWithCompany"
 
     CompanyBidInput:
       type: object

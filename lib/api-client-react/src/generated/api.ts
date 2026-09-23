@@ -52,6 +52,7 @@ import type {
   CompanyBidInput,
   CompanyBidListResponse,
   CompanyBidUpdate,
+  CompanyBidWithCompanyListResponse,
   CompanyInput,
   CompanyListResponse,
   CompanyUpdate,
@@ -1500,6 +1501,80 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getRestoreCompanyMutationOptions(options));
     }
+
+export const getListAllCompanyBidsUrl = () => {
+
+
+
+
+  return `/api/company-bids`
+}
+
+/**
+ * All company bids across every company (not soft-deleted), for the global Bids view.
+ */
+export const listAllCompanyBids = async ( options?: RequestInit): Promise<CompanyBidWithCompanyListResponse> => {
+
+  return customFetch<CompanyBidWithCompanyListResponse>(getListAllCompanyBidsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAllCompanyBidsQueryKey = () => {
+    return [
+    `/api/company-bids`
+    ] as const;
+    }
+
+
+export const getListAllCompanyBidsQueryOptions = <TData = Awaited<ReturnType<typeof listAllCompanyBids>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAllCompanyBids>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAllCompanyBidsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAllCompanyBids>>> = ({ signal }) => listAllCompanyBids({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAllCompanyBids>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAllCompanyBidsQueryResult = NonNullable<Awaited<ReturnType<typeof listAllCompanyBids>>>
+export type ListAllCompanyBidsQueryError = ErrorType<unknown>
+
+
+
+export function useListAllCompanyBids<TData = Awaited<ReturnType<typeof listAllCompanyBids>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAllCompanyBids>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAllCompanyBidsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListCompanyBidsUrl = (companyId: number,) => {
 
