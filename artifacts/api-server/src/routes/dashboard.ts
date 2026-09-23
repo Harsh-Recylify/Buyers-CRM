@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, companiesTable, activitiesTable, bidsTable, buyersTable, recyclersTable, tasksTable } from "@workspace/db";
-import { eq, sql, isNull, desc } from "drizzle-orm";
+import { db, companiesTable, activitiesTable, bidsTable, buyersTable, recyclersTable, tasksTable, usersTable } from "@workspace/db";
+import { eq, inArray, sql, isNull, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
 const router = Router();
@@ -126,10 +126,17 @@ router.get("/dashboard/recent", requireAuth, async (req, res): Promise<void> => 
     db.select().from(tasksTable).where(eq(tasksTable.status, "todo")).orderBy(tasksTable.dueDate).limit(5),
   ]);
 
+  const activityUserIds = [...new Set(recentActivities.map(a => a.userId).filter((id): id is number => id != null))];
+  const activityUsers = activityUserIds.length
+    ? await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable).where(inArray(usersTable.id, activityUserIds))
+    : [];
+  const activityUserMap = new Map(activityUsers.map(u => [u.id, u.name]));
+
   res.json({
     recentActivities: recentActivities.map(a => ({
       id: a.id, type: a.type, description: a.description, entityType: a.entityType,
-      entityId: a.entityId, entityName: a.entityName, userId: a.userId, userName: null,
+      entityId: a.entityId, entityName: a.entityName, userId: a.userId,
+      userName: a.userId ? activityUserMap.get(a.userId) ?? null : null,
       metadata: a.metadata, createdAt: a.createdAt.toISOString(),
     })),
     recentCompanies: recentCompanies.map(c => ({
