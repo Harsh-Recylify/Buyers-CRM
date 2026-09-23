@@ -148,6 +148,8 @@ export interface UserUpdate {
   status?: string;
   phone?: string;
   department?: string;
+  /** If provided, sets a new password for this user (min 6 characters). */
+  password?: string;
 }
 
 export interface Company {

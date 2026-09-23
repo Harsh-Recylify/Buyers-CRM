@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  useListUsers, useCreateUser, useDeleteUser,
+  useListUsers, useCreateUser, useUpdateUser, useDeleteUser,
   useListAuditLogs, useGetAppSettings, useUpdateAppSettings,
   useListInvitations, useCreateInvitation, useRevokeInvitation, useResendInvitation,
   getListUsersQueryKey, getListAuditLogsQueryKey, getGetAppSettingsQueryKey,
@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, ShieldAlert, Users, ClipboardList, Settings, Save, Mail, Copy, Check, RefreshCw, Send } from "lucide-react";
+import { Plus, Trash2, Pencil, ShieldAlert, Users, ClipboardList, Settings, Save, Mail, Copy, Check, RefreshCw, Send } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 const ROLES = ["super_admin", "admin", "manager", "team_member"];
@@ -108,6 +108,97 @@ function UserDialog({ onSuccess }: { onSuccess: () => void }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" className="bg-[#118847] hover:bg-[#0e7038]" disabled={createUser.isPending}>
               {createUser.isPending ? "Creating..." : "Create User"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditUserDialog({ targetUser, onSuccess }: { targetUser: any; onSuccess: () => void }) {
+  const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
+  const { register, handleSubmit, reset, setValue, watch } = useForm({
+    defaultValues: {
+      name: targetUser.name, email: targetUser.email, role: targetUser.role,
+      status: targetUser.status, department: targetUser.department ?? "", password: "",
+    }
+  });
+  const updateUser = useUpdateUser();
+
+  React.useEffect(() => {
+    if (open) {
+      reset({
+        name: targetUser.name, email: targetUser.email, role: targetUser.role,
+        status: targetUser.status, department: targetUser.department ?? "", password: "",
+      });
+    }
+  }, [open, targetUser]);
+
+  function onSubmit(data: any) {
+    const { password, ...rest } = data;
+    updateUser.mutate({ id: targetUser.id, data: { ...rest, ...(password ? { password } : {}) } }, {
+      onSuccess: () => {
+        toast({ title: "User updated" });
+        setOpen(false);
+        onSuccess();
+      },
+      onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label>Full Name</Label>
+            <Input placeholder="Name" {...register("name", { required: true })} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <Input type="email" placeholder="email@company.com" {...register("email", { required: true })} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Role</Label>
+              <Select value={watch("role")} onValueChange={v => setValue("role", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ROLES.map(r => <SelectItem key={r} value={r} className="capitalize">{r.replace(/_/g, " ")}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={watch("status")} onValueChange={v => setValue("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Department</Label>
+            <Input placeholder="e.g. Sales, Operations" {...register("department")} />
+          </div>
+          <div className="space-y-1.5 pt-2 border-t">
+            <Label>New Password</Label>
+            <PasswordInput placeholder="Leave blank to keep current password" {...register("password", { validate: v => !v || v.length >= 6 || "Minimum 6 characters" })} />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button type="submit" className="bg-[#118847] hover:bg-[#0e7038]" disabled={updateUser.isPending}>
+              {updateUser.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
@@ -514,14 +605,17 @@ export default function Admin() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost" size="sm"
-                          onClick={() => handleDeleteUser(u.id, u.name)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          disabled={deleteUserMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <EditUserDialog targetUser={u} onSuccess={() => queryClient.invalidateQueries({ queryKey: getListUsersQueryKey({}) })} />
+                          <Button
+                            variant="ghost" size="sm"
+                            onClick={() => handleDeleteUser(u.id, u.name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

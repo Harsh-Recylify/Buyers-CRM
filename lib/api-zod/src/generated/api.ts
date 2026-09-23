@@ -225,7 +225,8 @@ export const UpdateUserBody = zod.object({
   "role": zod.string().optional(),
   "status": zod.string().optional(),
   "phone": zod.string().optional(),
-  "department": zod.string().optional()
+  "department": zod.string().optional(),
+  "password": zod.string().optional().describe('If provided, sets a new password for this user (min 6 characters).')
 })
 
 export const UpdateUserResponse = zod.object({

@@ -2188,6 +2188,9 @@ components:
           type: string
         department:
           type: string
+        password:
+          type: string
+          description: If provided, sets a new password for this user (min 6 characters).
 
     # ── COMPANY SCHEMAS ─────────────────────────────────────────────────────────
     Company:

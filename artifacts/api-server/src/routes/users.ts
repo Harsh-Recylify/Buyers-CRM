@@ -7,6 +7,13 @@ import { parsePagination, buildMeta } from "../lib/pagination";
 
 const router = Router();
 
+const ROLE_RANK: Record<string, number> = {
+  team_member: 1,
+  manager: 2,
+  admin: 3,
+  super_admin: 4,
+};
+
 function formatUser(u: typeof usersTable.$inferSelect) {
   return {
     id: u.id, name: u.name, email: u.email, role: u.role,
@@ -88,9 +95,27 @@ router.patch("/users/:id", requireAuth, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  const { name, email, role, status, phone, department } = req.body;
+  const { name, email, role, status, phone, department, password } = req.body;
+
+  // Same rule as invitations: only a super_admin may hand out admin/super_admin
+  // roles. Without this, an admin could PATCH their own (or anyone's) role up
+  // to super_admin through this endpoint.
+  if (role && role !== existing.role && req.user?.role !== "super_admin" && ROLE_RANK[role] >= (ROLE_RANK[req.user?.role ?? ""] ?? 0)) {
+    res.status(403).json({ error: "You can only assign roles below your own level" });
+    return;
+  }
+
+  let passwordHash: string | undefined;
+  if (password) {
+    if (typeof password !== "string" || password.length < 6) {
+      res.status(400).json({ error: "Password must be at least 6 characters" });
+      return;
+    }
+    passwordHash = await bcrypt.hash(password, 12);
+  }
+
   const [user] = await db.update(usersTable)
-    .set({ name, email: email ? email.toLowerCase() : undefined, role, status, phone, department })
+    .set({ name, email: email ? email.toLowerCase() : undefined, role, status, phone, department, passwordHash })
     .where(eq(usersTable.id, id))
     .returning();
   res.json(formatUser(user));
