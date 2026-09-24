@@ -8,7 +8,6 @@ import {
   Building2,
   KanbanSquare,
   Users,
-  Recycle,
   Gavel,
   Package,
   CheckSquare,
@@ -37,7 +36,6 @@ const navItems = [
   { name: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { name: "Bids", href: "/bids", icon: Gavel },
   { name: "Buyers", href: "/buyers", icon: Users },
-  { name: "Recyclers", href: "/recyclers", icon: Recycle },
   { name: "IT Assets", href: "/assets", icon: Package },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
@@ -50,7 +48,6 @@ const SEARCH_RESULT_ROUTE: Record<string, (id: number) => string> = {
   company: (id) => `/companies/${id}`,
   buyer: (id) => `/buyers/${id}`,
   bid: (id) => `/bids/${id}`,
-  recycler: () => `/recyclers`,
   task: () => `/tasks`,
   user: () => `/admin`,
 };
@@ -59,7 +56,6 @@ const SEARCH_RESULT_LABEL: Record<string, string> = {
   company: "Company",
   buyer: "Buyer",
   bid: "Bid",
-  recycler: "Recycler",
   task: "Task",
   user: "Team member",
 };

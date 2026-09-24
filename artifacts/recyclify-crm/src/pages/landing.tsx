@@ -24,8 +24,8 @@ const FEATURES = [
   {
     icon: Users,
     accent: "bg-sky-500/10 text-sky-600",
-    title: "Verified Buyer & Recycler Network",
-    description: "Manage your trusted buyers and CPCB-authorized recyclers with full contact history in one place.",
+    title: "Verified Buyer Network",
+    description: "Manage your trusted buyers with full contact history, ratings, and bid performance in one place.",
   },
   {
     icon: BarChart3,

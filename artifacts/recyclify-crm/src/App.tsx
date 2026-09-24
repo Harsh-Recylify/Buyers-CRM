@@ -19,7 +19,6 @@ import CompanyDetail from "@/pages/company-detail";
 import Pipeline from "@/pages/pipeline";
 import Buyers from "@/pages/buyers";
 import BuyerDetail from "@/pages/buyer-detail";
-import Recyclers from "@/pages/recyclers";
 import Bids from "@/pages/bids";
 import BidDetail from "@/pages/bid-detail";
 import Assets from "@/pages/assets";
@@ -56,7 +55,6 @@ function Router() {
       <ProtectedRoute path="/pipeline" component={() => <Layout><Pipeline /></Layout>} />
       <ProtectedRoute path="/buyers/:id" component={() => <Layout><BuyerDetail /></Layout>} />
       <ProtectedRoute path="/buyers" component={() => <Layout><Buyers /></Layout>} />
-      <ProtectedRoute path="/recyclers" component={() => <Layout><Recyclers /></Layout>} />
       <ProtectedRoute path="/bids/:id" component={() => <Layout><BidDetail /></Layout>} />
       <ProtectedRoute path="/bids" component={() => <Layout><Bids /></Layout>} />
       <ProtectedRoute path="/assets" component={() => <Layout><Assets /></Layout>} />

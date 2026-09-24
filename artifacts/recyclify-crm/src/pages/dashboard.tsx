@@ -83,7 +83,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{stats?.activeBuyers || 0}</div>
                 <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <span className="font-medium text-emerald-500">+{(stats?.activeRecyclers || 0)}</span> recyclers
+                  <span className="font-medium text-emerald-500">{(stats?.wonDeals || 0)}</span> deals won
                 </p>
               </CardContent>
             </Card>

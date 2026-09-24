@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, companiesTable, buyersTable, recyclersTable, usersTable, tasksTable, activitiesTable, bidsTable } from "@workspace/db";
+import { db, companiesTable, buyersTable, usersTable, tasksTable, activitiesTable, bidsTable } from "@workspace/db";
 import { ilike, or, isNull, and, sql } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 
@@ -13,7 +13,7 @@ router.get("/search", requireAuth, async (req, res): Promise<void> => {
   }
   const pattern = `%${q}%`;
 
-  const [companies, buyers, recyclers, users, tasks, bids] = await Promise.all([
+  const [companies, buyers, users, tasks, bids] = await Promise.all([
     db.select({ id: companiesTable.id, name: companiesTable.name, industry: companiesTable.industry })
       .from(companiesTable)
       .where(and(ilike(companiesTable.name, pattern), isNull(companiesTable.deletedAt)) as any)
@@ -21,10 +21,6 @@ router.get("/search", requireAuth, async (req, res): Promise<void> => {
     db.select({ id: buyersTable.id, name: buyersTable.name, company: buyersTable.company })
       .from(buyersTable)
       .where(ilike(buyersTable.name, pattern) as any)
-      .limit(5),
-    db.select({ id: recyclersTable.id, name: recyclersTable.name, company: recyclersTable.company })
-      .from(recyclersTable)
-      .where(ilike(recyclersTable.name, pattern) as any)
       .limit(5),
     db.select({ id: usersTable.id, name: usersTable.name, email: usersTable.email })
       .from(usersTable)
@@ -46,7 +42,6 @@ router.get("/search", requireAuth, async (req, res): Promise<void> => {
   const results = [
     ...companies.map(c => ({ type: "company", id: c.id, title: c.name, subtitle: c.industry ?? null })),
     ...buyers.map(b => ({ type: "buyer", id: b.id, title: b.name, subtitle: b.company ?? null })),
-    ...recyclers.map(r => ({ type: "recycler", id: r.id, title: r.name, subtitle: r.company ?? null })),
     ...users.map(u => ({ type: "user", id: u.id, title: u.name, subtitle: u.email ?? null })),
     ...tasks.map(t => ({ type: "task", id: t.id, title: t.title, subtitle: t.status ?? null })),
     ...bids.map(b => ({ type: "bid", id: b.id, title: b.title, subtitle: b.status ?? null })),
