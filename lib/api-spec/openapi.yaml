@@ -2728,8 +2728,6 @@ components:
           type: ["string", "null"]
         gst:
           type: ["string", "null"]
-        pan:
-          type: ["string", "null"]
         state:
           type: ["string", "null"]
         city:
@@ -2740,15 +2738,17 @@ components:
           type: array
           items:
             type: string
-        maxBid:
-          type: ["number", "null"]
         preferredMaterials:
           type: ["string", "null"]
         pickupStates:
           type: array
           items:
             type: string
-        paymentTerms:
+        buyerType:
+          type: ["string", "null"]
+        assignedToId:
+          type: ["integer", "null"]
+        assignedToName:
           type: ["string", "null"]
         rating:
           type: number
@@ -2790,8 +2790,6 @@ components:
           type: string
         gst:
           type: string
-        pan:
-          type: string
         state:
           type: string
         city:
@@ -2802,16 +2800,16 @@ components:
           type: array
           items:
             type: string
-        maxBid:
-          type: number
         preferredMaterials:
           type: string
         pickupStates:
           type: array
           items:
             type: string
-        paymentTerms:
+        buyerType:
           type: string
+        assignedToId:
+          type: integer
         rating:
           type: number
         notes:
@@ -2830,8 +2828,6 @@ components:
           type: string
         gst:
           type: string
-        pan:
-          type: string
         state:
           type: string
         city:
@@ -2842,16 +2838,16 @@ components:
           type: array
           items:
             type: string
-        maxBid:
-          type: number
         preferredMaterials:
           type: string
         pickupStates:
           type: array
           items:
             type: string
-        paymentTerms:
+        buyerType:
           type: string
+        assignedToId:
+          type: integer
         rating:
           type: number
         status:

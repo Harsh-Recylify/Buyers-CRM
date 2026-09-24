@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, Users, Phone, Mail, MapPin, Gavel, Tag, Award, TrendingUp } from "lucide-react";
+import { ArrowLeft, Users, Phone, Mail, MapPin, Gavel, Tag, Award, TrendingUp, User } from "lucide-react";
 
 export default function BuyerDetail() {
   const params = useParams<{ id: string }>();
@@ -73,7 +73,7 @@ export default function BuyerDetail() {
           { icon: Gavel, label: "Total Bids", value: b.totalBids ?? 0 },
           { icon: Award, label: "Won Bids", value: b.wonBids ?? 0 },
           { icon: TrendingUp, label: "Win Rate", value: `${winRate}%` },
-          { icon: Tag, label: "Max Bid", value: b.maxBid ? `₹${Number(b.maxBid).toLocaleString("en-IN")}` : "—" },
+          { icon: Tag, label: "Buyer Type", value: b.buyerType || "—" },
         ].map(({ icon: Icon, label, value }) => (
           <Card key={label}>
             <CardContent className="pt-4">
@@ -96,7 +96,7 @@ export default function BuyerDetail() {
               { icon: Mail, label: "Email", value: b.email ?? "—" },
               { icon: MapPin, label: "Location", value: [b.city, b.state].filter(Boolean).join(", ") || "—" },
               { icon: Tag, label: "GST", value: b.gst ?? "—" },
-              { icon: Tag, label: "PAN", value: b.pan ?? "—" },
+              { icon: User, label: "Assigned To", value: b.assignedToName ?? "—" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3 text-sm">
                 <Icon className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -126,10 +126,6 @@ export default function BuyerDetail() {
                 ))}
                 {(b.pickupStates ?? []).length === 0 && <span className="text-sm text-muted-foreground">Not specified</span>}
               </div>
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Payment Terms: </span>
-              <span className="font-medium">{b.paymentTerms ?? "—"}</span>
             </div>
           </CardContent>
         </Card>

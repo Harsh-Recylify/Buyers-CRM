@@ -2,12 +2,14 @@ import React from "react";
 import {
   useListBuyers, getListBuyersQueryKey,
   useCreateBuyer, useUpdateBuyer, useDeleteBuyer,
+  useListUsers, getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -18,17 +20,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
+const BUYER_TYPES = ["Trader", "Recycler", "Refurbisher", "Scraper"];
+
 type BuyerFormData = {
   name: string; company: string; phone: string; email: string;
-  gst: string; pan: string; address: string; state: string; city: string;
-  materialCategories: string; maxBid: string; preferredMaterials: string;
-  pickupStates: string[]; paymentTerms: string; notes: string;
+  gst: string; address: string; state: string; city: string;
+  materialCategories: string; preferredMaterials: string;
+  pickupStates: string[]; buyerType: string; assignedToId: string; notes: string;
 };
 
 const emptyForm = (): BuyerFormData => ({
-  name: "", company: "", phone: "", email: "", gst: "", pan: "",
-  address: "", state: "", city: "", materialCategories: "", maxBid: "",
-  preferredMaterials: "", pickupStates: [], paymentTerms: "", notes: "",
+  name: "", company: "", phone: "", email: "", gst: "",
+  address: "", state: "", city: "", materialCategories: "",
+  preferredMaterials: "", pickupStates: [], buyerType: "", assignedToId: "", notes: "",
 });
 
 export default function Buyers() {
@@ -44,6 +48,9 @@ export default function Buyers() {
     { search },
     { query: { queryKey: getListBuyersQueryKey({ search }) } }
   );
+
+  const { data: usersData } = useListUsers({}, { query: { queryKey: getListUsersQueryKey({}) } });
+  const users = usersData?.data ?? [];
 
   const createBuyer = useCreateBuyer({
     mutation: {
@@ -85,13 +92,13 @@ export default function Buyers() {
     setForm({
       name: buyer.name || "", company: buyer.company || "",
       phone: buyer.phone || "", email: buyer.email || "",
-      gst: buyer.gst || "", pan: buyer.pan || "",
+      gst: buyer.gst || "",
       address: buyer.address || "", state: buyer.state || "", city: buyer.city || "",
       materialCategories: (buyer.materialCategories || []).join(", "),
-      maxBid: buyer.maxBid ? String(buyer.maxBid) : "",
       preferredMaterials: buyer.preferredMaterials || "",
       pickupStates: buyer.pickupStates || [],
-      paymentTerms: buyer.paymentTerms || "",
+      buyerType: buyer.buyerType || "",
+      assignedToId: buyer.assignedToId ? String(buyer.assignedToId) : "",
       notes: buyer.notes || "",
     });
     setShowModal(true);
@@ -108,15 +115,14 @@ export default function Buyers() {
       ...(form.phone && { phone: form.phone }),
       ...(form.email && { email: form.email }),
       ...(form.gst && { gst: form.gst }),
-      ...(form.pan && { pan: form.pan }),
       ...(form.address && { address: form.address }),
       ...(form.state && { state: form.state }),
       ...(form.city && { city: form.city }),
       materialCategories: form.materialCategories.split(",").map((s) => s.trim()).filter(Boolean),
-      ...(form.maxBid && { maxBid: parseFloat(form.maxBid) }),
       ...(form.preferredMaterials && { preferredMaterials: form.preferredMaterials }),
       pickupStates: form.pickupStates,
-      ...(form.paymentTerms && { paymentTerms: form.paymentTerms }),
+      ...(form.buyerType && { buyerType: form.buyerType }),
+      ...(form.assignedToId && { assignedToId: parseInt(form.assignedToId) }),
       ...(form.notes && { notes: form.notes }),
     };
     if (editingId) {
@@ -128,6 +134,7 @@ export default function Buyers() {
 
   const setInput = (field: keyof BuyerFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
+  const set = (field: keyof BuyerFormData) => (v: string) => setForm((f) => ({ ...f, [field]: v }));
 
   const isPending = createBuyer.isPending || updateBuyer.isPending;
 
@@ -163,8 +170,10 @@ export default function Buyers() {
               <TableRow>
                 <TableHead>Buyer Name</TableHead>
                 <TableHead>Company</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Materials</TableHead>
+                <TableHead>Assigned To</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -173,12 +182,12 @@ export default function Buyers() {
               {isLoading ? (
                 Array(5).fill(0).map((_, i) => (
                   <TableRow key={i}>
-                    {Array(6).fill(0).map((__, j) => <TableCell key={j}><Skeleton className="h-5 w-24" /></TableCell>)}
+                    {Array(8).fill(0).map((__, j) => <TableCell key={j}><Skeleton className="h-5 w-24" /></TableCell>)}
                   </TableRow>
                 ))
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                     <div className="flex flex-col items-center justify-center">
                       <Users className="h-12 w-12 text-gray-300 mb-4" />
                       <p className="text-lg font-medium text-gray-900">No buyers found</p>
@@ -194,6 +203,9 @@ export default function Buyers() {
                       {buyer.email && <div className="text-xs text-muted-foreground">{buyer.email}</div>}
                     </TableCell>
                     <TableCell>{buyer.company || "-"}</TableCell>
+                    <TableCell>
+                      {buyer.buyerType ? <Badge variant="secondary" className="text-xs">{buyer.buyerType}</Badge> : "-"}
+                    </TableCell>
                     <TableCell>{buyer.phone || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
@@ -205,6 +217,7 @@ export default function Buyers() {
                         )}
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm text-gray-600">{buyer.assignedToName || "-"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={buyer.status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-50 text-gray-600"}>
                         {buyer.status}
@@ -265,8 +278,13 @@ export default function Buyers() {
                 <Input id="b-gst" placeholder="22AAAAA0000A1Z5" value={form.gst} onChange={setInput("gst")} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="b-pan">PAN Number</Label>
-                <Input id="b-pan" placeholder="AAAAA0000A" value={form.pan} onChange={setInput("pan")} />
+                <Label>Buyer Type</Label>
+                <Select value={form.buyerType} onValueChange={set("buyerType")}>
+                  <SelectTrigger><SelectValue placeholder="Select buyer type" /></SelectTrigger>
+                  <SelectContent>
+                    {BUYER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="b-address">Address</Label>
@@ -285,13 +303,14 @@ export default function Buyers() {
                 <Input id="b-materials" placeholder="Laptops, Servers, Batteries" value={form.materialCategories} onChange={setInput("materialCategories")} />
                 <p className="text-xs text-muted-foreground">Type categories separated by commas.</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="b-maxBid">Maximum Bid Value (₹)</Label>
-                <Input id="b-maxBid" type="number" placeholder="100000" value={form.maxBid} onChange={setInput("maxBid")} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="b-paymentTerms">Payment Terms</Label>
-                <Input id="b-paymentTerms" placeholder="Net 30 / Advance / COD" value={form.paymentTerms} onChange={setInput("paymentTerms")} />
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Assigned Team Member</Label>
+                <Select value={form.assignedToId} onValueChange={set("assignedToId")}>
+                  <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
+                  <SelectContent>
+                    {users.map((u: any) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="b-notes">Notes</Label>

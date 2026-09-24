@@ -18,8 +18,6 @@ export interface Buyer {
   /** @nullable */
   gst?: string | null;
   /** @nullable */
-  pan?: string | null;
-  /** @nullable */
   state?: string | null;
   /** @nullable */
   city?: string | null;
@@ -27,12 +25,14 @@ export interface Buyer {
   address?: string | null;
   materialCategories?: string[];
   /** @nullable */
-  maxBid?: number | null;
-  /** @nullable */
   preferredMaterials?: string | null;
   pickupStates?: string[];
   /** @nullable */
-  paymentTerms?: string | null;
+  buyerType?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
+  /** @nullable */
+  assignedToName?: string | null;
   rating: number;
   status: string;
   /** @nullable */

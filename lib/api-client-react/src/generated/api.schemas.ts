@@ -471,8 +471,6 @@ export interface Buyer {
   /** @nullable */
   gst?: string | null;
   /** @nullable */
-  pan?: string | null;
-  /** @nullable */
   state?: string | null;
   /** @nullable */
   city?: string | null;
@@ -480,12 +478,14 @@ export interface Buyer {
   address?: string | null;
   materialCategories?: string[];
   /** @nullable */
-  maxBid?: number | null;
-  /** @nullable */
   preferredMaterials?: string | null;
   pickupStates?: string[];
   /** @nullable */
-  paymentTerms?: string | null;
+  buyerType?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
+  /** @nullable */
+  assignedToName?: string | null;
   rating: number;
   status: string;
   /** @nullable */
@@ -507,15 +507,14 @@ export interface BuyerInput {
   phone?: string;
   email?: string;
   gst?: string;
-  pan?: string;
   state?: string;
   city?: string;
   address?: string;
   materialCategories?: string[];
-  maxBid?: number;
   preferredMaterials?: string;
   pickupStates?: string[];
-  paymentTerms?: string;
+  buyerType?: string;
+  assignedToId?: number;
   rating?: number;
   notes?: string;
 }
@@ -526,15 +525,14 @@ export interface BuyerUpdate {
   phone?: string;
   email?: string;
   gst?: string;
-  pan?: string;
   state?: string;
   city?: string;
   address?: string;
   materialCategories?: string[];
-  maxBid?: number;
   preferredMaterials?: string;
   pickupStates?: string[];
-  paymentTerms?: string;
+  buyerType?: string;
+  assignedToId?: number;
   rating?: number;
   status?: string;
   notes?: string;

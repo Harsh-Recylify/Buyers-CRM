@@ -18,6 +18,8 @@ export const buyersTable = pgTable("buyers", {
   preferredMaterials: text("preferred_materials"),
   pickupStates: text("pickup_states").array().notNull().default([]),
   paymentTerms: text("payment_terms"),
+  buyerType: text("buyer_type"), // Trader | Recycler | Refurbisher | Scraper
+  assignedToId: integer("assigned_to_id"), // team member this buyer belongs to
   rating: numeric("rating").notNull().default("0"),
   status: text("status").notNull().default("active"), // active | inactive
   notes: text("notes"),

@@ -12,15 +12,14 @@ export interface BuyerUpdate {
   phone?: string;
   email?: string;
   gst?: string;
-  pan?: string;
   state?: string;
   city?: string;
   address?: string;
   materialCategories?: string[];
-  maxBid?: number;
   preferredMaterials?: string;
   pickupStates?: string[];
-  paymentTerms?: string;
+  buyerType?: string;
+  assignedToId?: number;
   rating?: number;
   status?: string;
   notes?: string;
