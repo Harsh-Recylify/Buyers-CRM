@@ -99,10 +99,6 @@ export default function Bids() {
     return result;
   }, [rows, statusFilter, sortBy]);
 
-  const amounts = rows.map(r => r.amount).filter((a): a is number => a != null);
-  const highestAmount = amounts.length ? Math.max(...amounts) : null;
-  const lowestAmount = amounts.length ? Math.min(...amounts) : null;
-
   function confirmDelete() {
     if (!deleting) return;
     if (deleting.kind === "bid") deleteBid.mutate({ id: deleting.id });
@@ -115,19 +111,6 @@ export default function Bids() {
         <h1 className="text-3xl font-bold tracking-tight">Bids</h1>
         <p className="text-muted-foreground mt-1">Manage open bids and negotiations.</p>
       </div>
-
-      {amounts.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 max-w-md">
-          <div className="rounded-xl border border-green-200 bg-green-50/50 px-4 py-3">
-            <p className="text-xs text-muted-foreground">Highest Bid</p>
-            <p className="text-lg font-bold text-green-700">₹{highestAmount!.toLocaleString()}</p>
-          </div>
-          <div className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3">
-            <p className="text-xs text-muted-foreground">Lowest Bid</p>
-            <p className="text-lg font-bold text-red-700">₹{lowestAmount!.toLocaleString()}</p>
-          </div>
-        </div>
-      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
