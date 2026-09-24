@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
@@ -18,14 +19,20 @@ type UnifiedRow = {
   key: string;
   kind: "bid" | "companyBid";
   id: number;
-  title: string;
   companyId: number;
   companyName: string | null;
   amount: number | null;
   status: string;
   createdAt: string;
-  buyerState: string | null;
   assignedToName: string | null;
+};
+
+const STATUS_OPTIONS = ["pending", "open", "negotiation", "awarded", "accepted", "rejected", "cancelled", "completed"];
+
+const SORT_OPTIONS: Record<string, string> = {
+  newest: "Newest First",
+  highest: "Highest Bid",
+  lowest: "Lowest Bid",
 };
 
 export default function Bids() {
@@ -35,6 +42,8 @@ export default function Bids() {
   });
   const [, setLocation] = useLocation();
   const [deleting, setDeleting] = React.useState<{ kind: "bid" | "companyBid"; id: number } | null>(null);
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [sortBy, setSortBy] = React.useState<"newest" | "highest" | "lowest">("newest");
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -63,19 +72,36 @@ export default function Bids() {
 
   const rows: UnifiedRow[] = React.useMemo(() => {
     const fromBids: UnifiedRow[] = (data?.data ?? []).map((b) => ({
-      key: `bid-${b.id}`, kind: "bid", id: b.id, title: b.title,
+      key: `bid-${b.id}`, kind: "bid", id: b.id,
       companyId: b.companyId, companyName: b.companyName ?? null,
       amount: b.highestBid ?? null, status: b.status, createdAt: b.createdAt,
-      buyerState: null, assignedToName: null,
+      assignedToName: null,
     }));
     const fromCompanyBids: UnifiedRow[] = (companyBidsData?.data ?? []).map((cb) => ({
-      key: `companyBid-${cb.id}`, kind: "companyBid", id: cb.id, title: `Offer from ${cb.buyerCompany}`,
+      key: `companyBid-${cb.id}`, kind: "companyBid", id: cb.id,
       companyId: cb.companyId, companyName: cb.companyName ?? null,
       amount: cb.bidAmount, status: cb.status, createdAt: cb.createdAt,
-      buyerState: cb.buyerState ?? null, assignedToName: cb.assignedToName ?? null,
+      assignedToName: cb.assignedToName ?? null,
     }));
-    return [...fromBids, ...fromCompanyBids].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return [...fromBids, ...fromCompanyBids];
   }, [data, companyBidsData]);
+
+  const visibleRows = React.useMemo(() => {
+    let result = statusFilter === "all" ? rows : rows.filter(r => r.status === statusFilter);
+    result = [...result];
+    if (sortBy === "highest") {
+      result.sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+    } else if (sortBy === "lowest") {
+      result.sort((a, b) => (a.amount ?? Infinity) - (b.amount ?? Infinity));
+    } else {
+      result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
+    return result;
+  }, [rows, statusFilter, sortBy]);
+
+  const amounts = rows.map(r => r.amount).filter((a): a is number => a != null);
+  const highestAmount = amounts.length ? Math.max(...amounts) : null;
+  const lowestAmount = amounts.length ? Math.min(...amounts) : null;
 
   function confirmDelete() {
     if (!deleting) return;
@@ -90,14 +116,41 @@ export default function Bids() {
         <p className="text-muted-foreground mt-1">Manage open bids and negotiations.</p>
       </div>
 
+      {amounts.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 max-w-md">
+          <div className="rounded-xl border border-green-200 bg-green-50/50 px-4 py-3">
+            <p className="text-xs text-muted-foreground">Highest Bid</p>
+            <p className="text-lg font-bold text-green-700">₹{highestAmount!.toLocaleString()}</p>
+          </div>
+          <div className="rounded-xl border border-red-200 bg-red-50/50 px-4 py-3">
+            <p className="text-xs text-muted-foreground">Lowest Bid</p>
+            <p className="text-lg font-bold text-red-700">₹{lowestAmount!.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Sort by" /></SelectTrigger>
+          <SelectContent>
+            {Object.entries(SORT_OPTIONS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Buyer State</TableHead>
               <TableHead>Team Member</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -107,26 +160,22 @@ export default function Bids() {
             {isLoadingAny ? (
               Array(5).fill(0).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-8 ml-auto" /></TableCell>
                 </TableRow>
               ))
-            ) : rows.length === 0 ? (
+            ) : visibleRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No bids found.</TableCell>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No bids found.</TableCell>
               </TableRow>
             ) : (
-              rows.map((row) => (
+              visibleRows.map((row) => (
                 <TableRow key={row.key} className="cursor-pointer hover:bg-muted/50" onClick={() => setLocation(`/companies/${row.companyId}`)}>
-                  <TableCell className="font-medium">{row.title}</TableCell>
-                  <TableCell>{row.companyName || '-'}</TableCell>
+                  <TableCell className="font-medium">{row.companyName || '-'}</TableCell>
                   <TableCell>{row.amount != null ? `₹${row.amount.toLocaleString()}` : '-'}</TableCell>
-                  <TableCell>{row.buyerState || '-'}</TableCell>
                   <TableCell>{row.assignedToName || '-'}</TableCell>
                   <TableCell><Badge variant="outline">{row.status}</Badge></TableCell>
                   <TableCell className="text-right">
