@@ -34,7 +34,7 @@ const navItems = [
   { name: "Companies", href: "/companies", icon: Building2 },
   { name: "Pipeline", href: "/pipeline", icon: KanbanSquare },
   { name: "Bids", href: "/bids", icon: Gavel },
-  { name: "Buyers", href: "/buyers", icon: Users },
+  { name: "Buyer Directory", href: "/buyers", icon: Users },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
   { name: "Activities", href: "/activities", icon: Activity },

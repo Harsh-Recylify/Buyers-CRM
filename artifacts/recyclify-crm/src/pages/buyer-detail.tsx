@@ -30,7 +30,7 @@ export default function BuyerDetail() {
       <div className="text-center py-20">
         <Users className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
         <p className="text-xl font-medium">Buyer not found</p>
-        <Link href="/buyers"><Button variant="outline" className="mt-4">Back to Buyers</Button></Link>
+        <Link href="/buyers"><Button variant="outline" className="mt-4">Back to Buyer Directory</Button></Link>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export default function BuyerDetail() {
       <div className="flex items-center gap-3">
         <Link href="/buyers">
           <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />Buyers
+            <ArrowLeft className="h-4 w-4" />Buyer Directory
           </Button>
         </Link>
       </div>
