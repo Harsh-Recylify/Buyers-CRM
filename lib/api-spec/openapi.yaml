@@ -1129,6 +1129,24 @@ paths:
         "204":
           description: Buyer deleted
 
+  /buyers/import:
+    post:
+      operationId: importBuyers
+      tags: [buyers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyerImportInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuyerImportResult"
+
   # ── RECYCLERS ────────────────────────────────────────────────────────────────
   /recyclers:
     get:
@@ -2854,6 +2872,53 @@ components:
           type: string
         notes:
           type: string
+
+    BuyerImportRow:
+      type: object
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        phone:
+          type: string
+        city:
+          type: string
+        assignedTeamMember:
+          type: string
+
+    BuyerImportInput:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuyerImportRow"
+
+    BuyerImportError:
+      type: object
+      required: [row, error]
+      properties:
+        row:
+          type: integer
+        name:
+          type: ["string", "null"]
+        error:
+          type: string
+
+    BuyerImportResult:
+      type: object
+      required: [imported, failed, errors]
+      properties:
+        imported:
+          type: integer
+        failed:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuyerImportError"
 
     # ── RECYCLER SCHEMAS ────────────────────────────────────────────────────────
     Recycler:

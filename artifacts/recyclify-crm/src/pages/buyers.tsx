@@ -1,8 +1,10 @@
 import React from "react";
+import * as XLSX from "xlsx";
 import {
   useListBuyers, getListBuyersQueryKey,
   useCreateBuyer, useUpdateBuyer, useDeleteBuyer,
   useListUsers, getListUsersQueryKey,
+  useImportBuyers, type BuyerImportResult,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -14,13 +16,70 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Plus, MoreHorizontal, Users } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Users, Upload, Download, FileSpreadsheet, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const BUYER_TYPES = ["Trader", "Recycler", "Refurbisher", "Scraper"];
+
+const IMPORT_COLUMNS = ["Buyer Name", "Company Name", "Phone", "City", "Assigned Team Member"];
+
+type ImportRow = { name: string; company: string; phone: string; city: string; assignedTeamMember: string };
+
+function normalizeHeader(h: unknown) {
+  return String(h ?? "").trim().toLowerCase().replace(/[^a-z]/g, "");
+}
+
+const HEADER_MAP: Record<string, keyof ImportRow> = {
+  buyername: "name",
+  name: "name",
+  companyname: "company",
+  company: "company",
+  phone: "phone",
+  mobile: "phone",
+  city: "city",
+  assignedteammember: "assignedTeamMember",
+  teammember: "assignedTeamMember",
+  assignedto: "assignedTeamMember",
+};
+
+function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const grid: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  if (grid.length === 0) return [];
+
+  const headerRow = grid[0];
+  const colMap: Record<number, keyof ImportRow> = {};
+  headerRow.forEach((h, i) => {
+    const mapped = HEADER_MAP[normalizeHeader(h)];
+    if (mapped) colMap[i] = mapped;
+  });
+
+  const rows: ImportRow[] = [];
+  for (let r = 1; r < grid.length; r++) {
+    const line = grid[r];
+    if (!line || line.every((c) => String(c ?? "").trim() === "")) continue;
+    const row: ImportRow = { name: "", company: "", phone: "", city: "", assignedTeamMember: "" };
+    Object.entries(colMap).forEach(([idx, field]) => {
+      row[field] = String(line[Number(idx)] ?? "").trim();
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    IMPORT_COLUMNS,
+    ["Ramesh Kumar", "Kumar Recyclers Pvt Ltd", "+91 98765 43210", "Mumbai", "Deepanshu Batra"],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Buyers");
+  XLSX.writeFile(wb, "buyer-import-template.xlsx");
+}
 
 type BuyerFormData = {
   name: string; company: string; phone: string; email: string;
@@ -43,6 +102,12 @@ export default function Buyers() {
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
   const [form, setForm] = React.useState<BuyerFormData>(emptyForm());
+  const [showImport, setShowImport] = React.useState(false);
+  const [importRows, setImportRows] = React.useState<ImportRow[]>([]);
+  const [importFileName, setImportFileName] = React.useState("");
+  const [importResult, setImportResult] = React.useState<BuyerImportResult | null>(null);
+  const [importParseError, setImportParseError] = React.useState("");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useListBuyers(
     { search },
@@ -85,7 +150,52 @@ export default function Buyers() {
     },
   });
 
+  const importBuyers = useImportBuyers({
+    mutation: {
+      onSuccess: (result) => {
+        setImportResult(result);
+        queryClient.invalidateQueries({ queryKey: getListBuyersQueryKey() });
+      },
+      onError: (e: any) => toast({ title: "Import failed", description: e.message, variant: "destructive" }),
+    },
+  });
+
   const closeModal = () => { setShowModal(false); setEditingId(null); setForm(emptyForm()); };
+
+  const closeImport = () => {
+    setShowImport(false);
+    setImportRows([]);
+    setImportFileName("");
+    setImportResult(null);
+    setImportParseError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportFileName(file.name);
+    setImportResult(null);
+    setImportParseError("");
+    try {
+      const buffer = await file.arrayBuffer();
+      const rows = parseWorkbook(buffer);
+      if (rows.length === 0) {
+        setImportParseError("No rows found. Make sure the first row has column headers matching the format below.");
+        setImportRows([]);
+      } else {
+        setImportRows(rows);
+      }
+    } catch (err: any) {
+      setImportParseError("Couldn't read that file. Please upload a valid .xlsx, .xls, or .csv file.");
+      setImportRows([]);
+    }
+  };
+
+  const handleImportSubmit = () => {
+    if (importRows.length === 0) return;
+    importBuyers.mutate({ data: { rows: importRows } });
+  };
 
   const openEdit = (buyer: any) => {
     setEditingId(buyer.id);
@@ -145,10 +255,16 @@ export default function Buyers() {
           <h1 className="text-3xl font-bold tracking-tight">Buyer Directory</h1>
           <p className="text-muted-foreground mt-1">Manage e-waste buyers and bidders.</p>
         </div>
-        <Button className="shrink-0 gap-2" onClick={() => { setEditingId(null); setForm(emptyForm()); setShowModal(true); }}>
-          <Plus className="h-4 w-4" />
-          Add Buyer
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+          <Button className="gap-2" onClick={() => { setEditingId(null); setForm(emptyForm()); setShowModal(true); }}>
+            <Plus className="h-4 w-4" />
+            Add Buyer
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border shadow-sm flex flex-col">
@@ -345,6 +461,114 @@ export default function Buyers() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Buyers */}
+      <Dialog open={showImport} onOpenChange={(open) => { if (!open) closeImport(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" /> Import Buyers from Spreadsheet
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Upload an Excel (.xlsx) or CSV file with the first row as column headers, in this format:
+              </p>
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {IMPORT_COLUMNS.map((c) => <TableHead key={c} className="whitespace-nowrap">{c}</TableHead>)}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="text-muted-foreground">Ramesh Kumar</TableCell>
+                      <TableCell className="text-muted-foreground">Kumar Recyclers Pvt Ltd</TableCell>
+                      <TableCell className="text-muted-foreground">+91 98765 43210</TableCell>
+                      <TableCell className="text-muted-foreground">Mumbai</TableCell>
+                      <TableCell className="text-muted-foreground">Deepanshu Batra</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Only "Buyer Name" is required. "Assigned Team Member" should match an existing team member's name exactly.
+              </p>
+              <Button type="button" variant="link" size="sm" className="px-0 h-auto mt-1 gap-1" onClick={downloadTemplate}>
+                <Download className="h-3.5 w-3.5" /> Download blank template
+              </Button>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="import-file">Spreadsheet file</Label>
+              <Input id="import-file" ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileSelect} />
+            </div>
+
+            {importParseError && (
+              <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                {importParseError}
+              </div>
+            )}
+
+            {importRows.length > 0 && !importResult && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+                {importRows.length} buyer{importRows.length !== 1 ? "s" : ""} found in "{importFileName}", ready to import.
+              </div>
+            )}
+
+            {importResult && (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                  Imported {importResult.imported} buyer{importResult.imported !== 1 ? "s" : ""}
+                  {importResult.failed > 0 ? `, ${importResult.failed} failed.` : "."}
+                </div>
+                {importResult.errors.length > 0 && (
+                  <div className="rounded-lg border max-h-48 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Row</TableHead>
+                          <TableHead>Buyer</TableHead>
+                          <TableHead>Issue</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {importResult.errors.map((err, i) => (
+                          <TableRow key={i}>
+                            <TableCell>{err.row}</TableCell>
+                            <TableCell>{err.name || "-"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{err.error}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={closeImport}>
+              {importResult ? "Close" : "Cancel"}
+            </Button>
+            {!importResult && (
+              <Button
+                type="button"
+                onClick={handleImportSubmit}
+                disabled={importRows.length === 0 || importBuyers.isPending}
+              >
+                {importBuyers.isPending ? "Importing..." : `Import ${importRows.length || ""} Buyer${importRows.length === 1 ? "" : "s"}`}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

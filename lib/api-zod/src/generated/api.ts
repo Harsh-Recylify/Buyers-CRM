@@ -1350,6 +1350,27 @@ export const DeleteBuyerParams = zod.object({
 export const DeleteBuyerResponse = zod.void()
 
 
+export const ImportBuyersBody = zod.object({
+  "rows": zod.array(zod.object({
+  "name": zod.string().optional(),
+  "company": zod.string().optional(),
+  "phone": zod.string().optional(),
+  "city": zod.string().optional(),
+  "assignedTeamMember": zod.string().optional()
+}))
+})
+
+export const ImportBuyersResponse = zod.object({
+  "imported": zod.number(),
+  "failed": zod.number(),
+  "errors": zod.array(zod.object({
+  "row": zod.number(),
+  "name": zod.string().nullish(),
+  "error": zod.string()
+}))
+})
+
+
 export const ListRecyclersQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "status": zod.coerce.string().optional(),

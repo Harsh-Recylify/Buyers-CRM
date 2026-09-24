@@ -538,6 +538,31 @@ export interface BuyerUpdate {
   notes?: string;
 }
 
+export interface BuyerImportRow {
+  name?: string;
+  company?: string;
+  phone?: string;
+  city?: string;
+  assignedTeamMember?: string;
+}
+
+export interface BuyerImportInput {
+  rows: BuyerImportRow[];
+}
+
+export interface BuyerImportError {
+  row: number;
+  /** @nullable */
+  name?: string | null;
+  error: string;
+}
+
+export interface BuyerImportResult {
+  imported: number;
+  failed: number;
+  errors: BuyerImportError[];
+}
+
 export interface Recycler {
   id: number;
   name: string;

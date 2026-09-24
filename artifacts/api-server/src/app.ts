@@ -69,8 +69,10 @@ app.use(
   }),
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Default body-parser limit (100kb) is too small for a bulk buyer import
+// (POST /buyers/import), which can carry thousands of parsed spreadsheet rows.
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Health checks (Render's own liveness probe, and any external uptime/keep-alive
 // pinger) must never be rate limited. They're infra-internal, expected to be

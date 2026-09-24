@@ -42,6 +42,8 @@ import type {
   BidUpdate,
   BidsReport,
   Buyer,
+  BuyerImportInput,
+  BuyerImportResult,
   BuyerInput,
   BuyerListResponse,
   BuyerUpdate,
@@ -3944,6 +3946,70 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getDeleteBuyerMutationOptions(options));
+    }
+
+export const getImportBuyersUrl = () => {
+
+
+
+
+  return `/api/buyers/import`
+}
+
+export const importBuyers = async (buyerImportInput: BuyerImportInput, options?: RequestInit): Promise<BuyerImportResult> => {
+
+  return customFetch<BuyerImportResult>(getImportBuyersUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(buyerImportInput)
+  }
+);}
+
+
+
+
+export const getImportBuyersMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importBuyers>>, TError,{data: BodyType<BuyerImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importBuyers>>, TError,{data: BodyType<BuyerImportInput>}, TContext> => {
+
+const mutationKey = ['importBuyers'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importBuyers>>, {data: BodyType<BuyerImportInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importBuyers(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportBuyersMutationResult = NonNullable<Awaited<ReturnType<typeof importBuyers>>>
+    export type ImportBuyersMutationBody = BodyType<BuyerImportInput>
+    export type ImportBuyersMutationError = ErrorType<unknown>
+
+    export const useImportBuyers = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importBuyers>>, TError,{data: BodyType<BuyerImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importBuyers>>,
+        TError,
+        {data: BodyType<BuyerImportInput>},
+        TContext
+      > => {
+      return useMutation(getImportBuyersMutationOptions(options));
     }
 
 export const getListRecyclersUrl = (params?: ListRecyclersParams,) => {

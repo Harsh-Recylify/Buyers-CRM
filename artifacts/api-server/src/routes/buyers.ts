@@ -59,6 +59,66 @@ router.post("/buyers", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(await formatBuyer(buyer));
 });
 
+router.post("/buyers/import", requireAuth, async (req, res): Promise<void> => {
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (rows.length === 0) { res.status(400).json({ error: "rows array is required" }); return; }
+
+  // Resolved server-side (rather than via GET /users, which is admin-only)
+  // so team members without user-management access can still import buyers
+  // and have "Assigned Team Member" names matched to real accounts.
+  const allUsers = await db.select({ id: usersTable.id, name: usersTable.name }).from(usersTable);
+  const userByName = new Map<string, number>();
+  for (const u of allUsers) {
+    const key = u.name.trim().toLowerCase();
+    if (!userByName.has(key)) userByName.set(key, u.id);
+  }
+
+  const errors: { row: number; name: string | null; error: string }[] = [];
+  let imported = 0;
+  let failed = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i] ?? {};
+    const rowNum = i + 2; // +2 accounts for the header row in the spreadsheet
+    const name = typeof r.name === "string" ? r.name.trim() : "";
+    if (!name) {
+      failed++;
+      errors.push({ row: rowNum, name: null, error: "Buyer Name is required" });
+      continue;
+    }
+
+    let assignedToId: number | null = null;
+    const assignedRaw = typeof r.assignedTeamMember === "string" ? r.assignedTeamMember.trim() : "";
+    if (assignedRaw) {
+      const match = userByName.get(assignedRaw.toLowerCase());
+      if (match) {
+        assignedToId = match;
+      } else {
+        errors.push({ row: rowNum, name, error: `Team member "${assignedRaw}" not found — imported without assignment` });
+      }
+    }
+
+    await db.insert(buyersTable).values({
+      name,
+      company: typeof r.company === "string" && r.company.trim() ? r.company.trim() : null,
+      phone: typeof r.phone === "string" && r.phone.trim() ? r.phone.trim() : null,
+      city: typeof r.city === "string" && r.city.trim() ? r.city.trim() : null,
+      assignedToId,
+    });
+    imported++;
+  }
+
+  if (imported > 0) {
+    await logActivity({
+      type: "buyer_added",
+      description: `Imported ${imported} buyer${imported === 1 ? "" : "s"} from spreadsheet`,
+      userId: req.user?.id,
+    });
+  }
+
+  res.json({ imported, failed, errors });
+});
+
 router.get("/buyers/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [buyer] = await db.select().from(buyersTable).where(eq(buyersTable.id, id));
