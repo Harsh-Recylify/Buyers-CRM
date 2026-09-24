@@ -98,6 +98,8 @@ export default function Buyers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [buyerTypeFilter, setBuyerTypeFilter] = React.useState("all");
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
@@ -109,9 +111,14 @@ export default function Buyers() {
   const [importParseError, setImportParseError] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const listParams = {
+    search,
+    ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(buyerTypeFilter !== "all" && { buyerType: buyerTypeFilter }),
+  };
   const { data, isLoading } = useListBuyers(
-    { search },
-    { query: { queryKey: getListBuyersQueryKey({ search }) } }
+    listParams,
+    { query: { queryKey: getListBuyersQueryKey(listParams) } }
   );
 
   const { data: usersData } = useListUsers({}, { query: { queryKey: getListUsersQueryKey({}) } });
@@ -142,13 +149,28 @@ export default function Buyers() {
   const deleteBuyer = useDeleteBuyer({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Buyer removed" });
+        toast({ title: "Buyer deactivated" });
         queryClient.invalidateQueries({ queryKey: getListBuyersQueryKey() });
         setDeletingId(null);
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
     },
   });
+
+  const toggleBuyerStatus = useUpdateBuyer({
+    mutation: {
+      onSuccess: (_data, variables) => {
+        const activated = (variables.data as any).status === "active";
+        toast({ title: activated ? "Buyer activated" : "Buyer deactivated" });
+        queryClient.invalidateQueries({ queryKey: getListBuyersQueryKey() });
+      },
+      onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    },
+  });
+
+  const handleActivate = (id: number) => {
+    toggleBuyerStatus.mutate({ id, data: { status: "active" } });
+  };
 
   const importBuyers = useImportBuyers({
     mutation: {
@@ -268,7 +290,7 @@ export default function Buyers() {
       </div>
 
       <div className="bg-white rounded-xl border shadow-sm flex flex-col">
-        <div className="p-4 border-b flex gap-4 items-center bg-gray-50/50 rounded-t-xl">
+        <div className="p-4 border-b flex flex-wrap gap-3 items-center bg-gray-50/50 rounded-t-xl">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -278,6 +300,21 @@ export default function Buyers() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40 bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={buyerTypeFilter} onValueChange={setBuyerTypeFilter}>
+            <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Buyer Type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Buyer Types</SelectItem>
+              {BUYER_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="overflow-x-auto">
@@ -352,7 +389,11 @@ export default function Buyers() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openEdit(buyer)}>Edit Buyer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeletingId(buyer.id)}>Delete</DropdownMenuItem>
+                            {buyer.status === "active" ? (
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingId(buyer.id)}>Deactivate</DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleActivate(buyer.id)}>Activate</DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -443,12 +484,12 @@ export default function Buyers() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
+      {/* Deactivate Confirmation */}
       <AlertDialog open={deletingId !== null} onOpenChange={(open) => { if (!open) setDeletingId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Buyer?</AlertDialogTitle>
-            <AlertDialogDescription>This action will deactivate the buyer. Bid history will be preserved.</AlertDialogDescription>
+            <AlertDialogTitle>Deactivate Buyer?</AlertDialogTitle>
+            <AlertDialogDescription>The buyer will be marked inactive. Bid history is preserved, and you can reactivate it anytime from the buyer's menu.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -456,7 +497,7 @@ export default function Buyers() {
               className="bg-destructive hover:bg-destructive/90"
               onClick={() => deletingId && deleteBuyer.mutate({ id: deletingId })}
             >
-              Remove
+              Deactivate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

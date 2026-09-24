@@ -1045,6 +1045,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: buyerType
+          in: query
+          schema:
+            type: string
         - name: page
           in: query
           schema:

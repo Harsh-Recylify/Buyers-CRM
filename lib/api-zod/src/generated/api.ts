@@ -1182,6 +1182,7 @@ export const ListBuyersQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "status": zod.coerce.string().optional(),
   "state": zod.coerce.string().optional(),
+  "buyerType": zod.coerce.string().optional(),
   "page": zod.coerce.number().optional(),
   "limit": zod.coerce.number().optional()
 })

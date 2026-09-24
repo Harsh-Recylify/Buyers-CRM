@@ -34,6 +34,7 @@ router.get("/buyers", requireAuth, async (req, res): Promise<void> => {
   if (q.search) conditions.push(ilike(buyersTable.name, `%${q.search}%`));
   if (q.status) conditions.push(eq(buyersTable.status, q.status));
   if (q.state) conditions.push(eq(buyersTable.state, q.state));
+  if (q.buyerType) conditions.push(eq(buyersTable.buyerType, q.buyerType));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const [rows, [{ count: total }]] = await Promise.all([

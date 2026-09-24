@@ -10,6 +10,7 @@ export type ListBuyersParams = {
 search?: string;
 status?: string;
 state?: string;
+buyerType?: string;
 page?: number;
 limit?: number;
 };
