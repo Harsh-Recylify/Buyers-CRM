@@ -77,6 +77,44 @@ router.post("/companies", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(await formatCompany(company));
 });
 
+router.post("/companies/import", requireAuth, async (req, res): Promise<void> => {
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
+  if (rows.length === 0) { res.status(400).json({ error: "rows array is required" }); return; }
+
+  const errors: { row: number; name: string | null; error: string }[] = [];
+  let imported = 0;
+  let failed = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i] ?? {};
+    const rowNum = i + 2; // +2 accounts for the header row in the spreadsheet
+    const name = typeof r.name === "string" ? r.name.trim() : "";
+    if (!name) {
+      failed++;
+      errors.push({ row: rowNum, name: null, error: "Company Name is required" });
+      continue;
+    }
+
+    await db.insert(companiesTable).values({
+      name,
+      city: typeof r.city === "string" && r.city.trim() ? r.city.trim() : null,
+      stage: "New Lead",
+      priority: "medium",
+    });
+    imported++;
+  }
+
+  if (imported > 0) {
+    await logActivity({
+      type: "company_created",
+      description: `Imported ${imported} compan${imported === 1 ? "y" : "ies"} from spreadsheet`,
+      userId: req.user?.id,
+    });
+  }
+
+  res.json({ imported, failed, errors });
+});
+
 router.get("/companies/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, id));

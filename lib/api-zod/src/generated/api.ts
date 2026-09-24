@@ -353,6 +353,24 @@ export const CreateCompanyResponse = zod.object({
 })
 
 
+export const ImportCompaniesBody = zod.object({
+  "rows": zod.array(zod.object({
+  "name": zod.string().optional(),
+  "city": zod.string().optional()
+}))
+})
+
+export const ImportCompaniesResponse = zod.object({
+  "imported": zod.number(),
+  "failed": zod.number(),
+  "errors": zod.array(zod.object({
+  "row": zod.number(),
+  "name": zod.string().nullish(),
+  "error": zod.string()
+}))
+})
+
+
 export const GetCompanyParams = zod.object({
   "id": zod.coerce.number()
 })

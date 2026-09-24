@@ -247,6 +247,28 @@ export interface CompanyUpdate {
   notes?: string;
 }
 
+export interface CompanyImportRow {
+  name?: string;
+  city?: string;
+}
+
+export interface CompanyImportInput {
+  rows: CompanyImportRow[];
+}
+
+export interface CompanyImportError {
+  row: number;
+  /** @nullable */
+  name?: string | null;
+  error: string;
+}
+
+export interface CompanyImportResult {
+  imported: number;
+  failed: number;
+  errors: CompanyImportError[];
+}
+
 export interface StageUpdate {
   stage: string;
 }

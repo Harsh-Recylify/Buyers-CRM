@@ -55,6 +55,8 @@ import type {
   CompanyBidListResponse,
   CompanyBidUpdate,
   CompanyBidWithCompanyListResponse,
+  CompanyImportInput,
+  CompanyImportResult,
   CompanyInput,
   CompanyListResponse,
   CompanyUpdate,
@@ -1173,6 +1175,70 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getCreateCompanyMutationOptions(options));
+    }
+
+export const getImportCompaniesUrl = () => {
+
+
+
+
+  return `/api/companies/import`
+}
+
+export const importCompanies = async (companyImportInput: CompanyImportInput, options?: RequestInit): Promise<CompanyImportResult> => {
+
+  return customFetch<CompanyImportResult>(getImportCompaniesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(companyImportInput)
+  }
+);}
+
+
+
+
+export const getImportCompaniesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCompanies>>, TError,{data: BodyType<CompanyImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importCompanies>>, TError,{data: BodyType<CompanyImportInput>}, TContext> => {
+
+const mutationKey = ['importCompanies'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importCompanies>>, {data: BodyType<CompanyImportInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importCompanies(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportCompaniesMutationResult = NonNullable<Awaited<ReturnType<typeof importCompanies>>>
+    export type ImportCompaniesMutationBody = BodyType<CompanyImportInput>
+    export type ImportCompaniesMutationError = ErrorType<unknown>
+
+    export const useImportCompanies = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCompanies>>, TError,{data: BodyType<CompanyImportInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importCompanies>>,
+        TError,
+        {data: BodyType<CompanyImportInput>},
+        TContext
+      > => {
+      return useMutation(getImportCompaniesMutationOptions(options));
     }
 
 export const getGetCompanyUrl = (id: number,) => {
