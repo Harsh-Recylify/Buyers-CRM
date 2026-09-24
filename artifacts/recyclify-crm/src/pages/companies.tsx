@@ -29,7 +29,6 @@ const PIPELINE_STAGES = [
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
-const INDUSTRIES = ["IT", "Manufacturing", "Healthcare", "Education", "Finance", "Retail", "Government", "Other"];
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana",
   "Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
@@ -39,15 +38,10 @@ const INDIAN_STATES = [
 
 type CompanyFormData = {
   name: string;
-  industry: string;
-  website: string;
-  gst: string;
-  pan: string;
   address: string;
   state: string;
   city: string;
   pincode: string;
-  leadSource: string;
   ownerId: string;
   stage: string;
   priority: string;
@@ -58,8 +52,8 @@ type CompanyFormData = {
 };
 
 const emptyForm = (): CompanyFormData => ({
-  name: "", industry: "", website: "", gst: "", pan: "",
-  address: "", state: "", city: "", pincode: "", leadSource: "",
+  name: "",
+  address: "", state: "", city: "", pincode: "",
   ownerId: "", stage: "New Lead", priority: "medium",
   expectedScrapWeight: "", expectedRevenue: "", expectedPickupDate: "", notes: "",
 });
@@ -152,15 +146,10 @@ export default function Companies() {
     setEditingId(company.id);
     setForm({
       name: company.name || "",
-      industry: company.industry || "",
-      website: company.website || "",
-      gst: company.gst || "",
-      pan: company.pan || "",
       address: company.address || "",
       state: company.state || "",
       city: company.city || "",
       pincode: company.pincode || "",
-      leadSource: company.leadSource || "",
       ownerId: company.ownerId ? String(company.ownerId) : "",
       stage: company.stage || "New Lead",
       priority: company.priority || "medium",
@@ -180,15 +169,10 @@ export default function Companies() {
     }
     const payload = {
       name: form.name.trim(),
-      ...(form.industry && { industry: form.industry }),
-      ...(form.website && { website: form.website }),
-      ...(form.gst && { gst: form.gst }),
-      ...(form.pan && { pan: form.pan }),
       ...(form.address && { address: form.address }),
       ...(form.state && { state: form.state }),
       ...(form.city && { city: form.city }),
       ...(form.pincode && { pincode: form.pincode }),
-      ...(form.leadSource && { leadSource: form.leadSource }),
       ...(form.ownerId && { ownerId: parseInt(form.ownerId) }),
       stage: form.stage,
       priority: form.priority,
@@ -447,31 +431,6 @@ export default function Companies() {
                 <Input id="name" placeholder="Acme Corp Pvt. Ltd." value={form.name} onChange={setInput("name")} required />
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Industry</Label>
-                <Select value={form.industry} onValueChange={set("industry")}>
-                  <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
-                  <SelectContent>
-                    {INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="website">Website</Label>
-                <Input id="website" placeholder="https://example.com" value={form.website} onChange={setInput("website")} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="gst">GST Number</Label>
-                <Input id="gst" placeholder="22AAAAA0000A1Z5" value={form.gst} onChange={setInput("gst")} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="pan">PAN Number</Label>
-                <Input id="pan" placeholder="AAAAA0000A" value={form.pan} onChange={setInput("pan")} />
-              </div>
-
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" placeholder="123 Main Street" value={form.address} onChange={setInput("address")} />
@@ -495,11 +454,6 @@ export default function Companies() {
               <div className="space-y-1.5">
                 <Label htmlFor="pincode">Pincode</Label>
                 <Input id="pincode" placeholder="400001" value={form.pincode} onChange={setInput("pincode")} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="leadSource">Lead Source</Label>
-                <Input id="leadSource" placeholder="Referral / Website / Cold Call" value={form.leadSource} onChange={setInput("leadSource")} />
               </div>
 
               <div className="space-y-1.5">

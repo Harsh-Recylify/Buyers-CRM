@@ -35,7 +35,6 @@ const STAGES = [
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
-const INDUSTRIES = ["IT", "Manufacturing", "Healthcare", "Education", "Finance", "Retail", "Government", "Other"];
 const INDIAN_STATES = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana",
   "Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
@@ -44,8 +43,8 @@ const INDIAN_STATES = [
 ];
 
 type CompanyEditForm = {
-  name: string; industry: string; website: string; gst: string; pan: string;
-  address: string; state: string; city: string; pincode: string; leadSource: string;
+  name: string;
+  address: string; state: string; city: string; pincode: string;
   ownerId: string; stage: string; priority: string;
   expectedScrapWeight: string; expectedRevenue: string; expectedPickupDate: string; notes: string;
 };
@@ -494,8 +493,8 @@ export default function CompanyDetail() {
   const [taskPriority, setTaskPriority] = React.useState("medium");
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState<CompanyEditForm>({
-    name: "", industry: "", website: "", gst: "", pan: "", address: "",
-    state: "", city: "", pincode: "", leadSource: "", ownerId: "", stage: "New Lead",
+    name: "", address: "",
+    state: "", city: "", pincode: "", ownerId: "", stage: "New Lead",
     priority: "medium", expectedScrapWeight: "", expectedRevenue: "", expectedPickupDate: "", notes: "",
   });
 
@@ -503,15 +502,10 @@ export default function CompanyDetail() {
     const c = company as any;
     setEditForm({
       name: c.name ?? "",
-      industry: c.industry ?? "",
-      website: c.website ?? "",
-      gst: c.gst ?? "",
-      pan: c.pan ?? "",
       address: c.address ?? "",
       state: c.state ?? "",
       city: c.city ?? "",
       pincode: c.pincode ?? "",
-      leadSource: c.leadSource ?? "",
       ownerId: c.ownerId ? String(c.ownerId) : "",
       stage: c.stage ?? "New Lead",
       priority: c.priority ?? "medium",
@@ -533,15 +527,10 @@ export default function CompanyDetail() {
     if (!editForm.name.trim()) { toast({ title: "Company name is required", variant: "destructive" }); return; }
     const payload: Record<string, any> = {
       name: editForm.name.trim(),
-      industry: editForm.industry || null,
-      website: editForm.website || null,
-      gst: editForm.gst || null,
-      pan: editForm.pan || null,
       address: editForm.address || null,
       state: editForm.state || null,
       city: editForm.city || null,
       pincode: editForm.pincode || null,
-      leadSource: editForm.leadSource || null,
       ownerId: editForm.ownerId ? parseInt(editForm.ownerId) : null,
       stage: editForm.stage,
       priority: editForm.priority,
@@ -876,29 +865,6 @@ export default function CompanyDetail() {
                 <Input value={editForm.name} onChange={setEF("name")} placeholder="Acme Corp Pvt. Ltd." required />
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Industry</Label>
-                <Select value={editForm.industry} onValueChange={v => setEditForm(f => ({ ...f, industry: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
-                  <SelectContent>{INDUSTRIES.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Website</Label>
-                <Input value={editForm.website} onChange={setEF("website")} placeholder="https://example.com" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>GST Number</Label>
-                <Input value={editForm.gst} onChange={setEF("gst")} placeholder="22AAAAA0000A1Z5" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>PAN Number</Label>
-                <Input value={editForm.pan} onChange={setEF("pan")} placeholder="AAAAA0000A" />
-              </div>
-
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Address</Label>
                 <Input value={editForm.address} onChange={setEF("address")} placeholder="123 Main Street" />
@@ -920,11 +886,6 @@ export default function CompanyDetail() {
               <div className="space-y-1.5">
                 <Label>Pincode</Label>
                 <Input value={editForm.pincode} onChange={setEF("pincode")} placeholder="400001" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Lead Source</Label>
-                <Input value={editForm.leadSource} onChange={setEF("leadSource")} placeholder="Referral / Website / Cold Call" />
               </div>
 
               <div className="space-y-1.5">
