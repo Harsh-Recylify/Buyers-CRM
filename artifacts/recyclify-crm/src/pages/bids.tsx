@@ -24,6 +24,8 @@ type UnifiedRow = {
   amount: number | null;
   status: string;
   createdAt: string;
+  buyerState: string | null;
+  assignedToName: string | null;
 };
 
 export default function Bids() {
@@ -64,11 +66,13 @@ export default function Bids() {
       key: `bid-${b.id}`, kind: "bid", id: b.id, title: b.title,
       companyId: b.companyId, companyName: b.companyName ?? null,
       amount: b.highestBid ?? null, status: b.status, createdAt: b.createdAt,
+      buyerState: null, assignedToName: null,
     }));
     const fromCompanyBids: UnifiedRow[] = (companyBidsData?.data ?? []).map((cb) => ({
       key: `companyBid-${cb.id}`, kind: "companyBid", id: cb.id, title: `Offer from ${cb.buyerCompany}`,
       companyId: cb.companyId, companyName: cb.companyName ?? null,
       amount: cb.bidAmount, status: cb.status, createdAt: cb.createdAt,
+      buyerState: cb.buyerState ?? null, assignedToName: cb.assignedToName ?? null,
     }));
     return [...fromBids, ...fromCompanyBids].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [data, companyBidsData]);
@@ -93,6 +97,8 @@ export default function Bids() {
               <TableHead>Title</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Amount</TableHead>
+              <TableHead>Buyer State</TableHead>
+              <TableHead>Team Member</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -105,12 +111,14 @@ export default function Bids() {
                   <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-5 w-8 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No bids found.</TableCell>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No bids found.</TableCell>
               </TableRow>
             ) : (
               rows.map((row) => (
@@ -118,6 +126,8 @@ export default function Bids() {
                   <TableCell className="font-medium">{row.title}</TableCell>
                   <TableCell>{row.companyName || '-'}</TableCell>
                   <TableCell>{row.amount != null ? `₹${row.amount.toLocaleString()}` : '-'}</TableCell>
+                  <TableCell>{row.buyerState || '-'}</TableCell>
+                  <TableCell>{row.assignedToName || '-'}</TableCell>
                   <TableCell><Badge variant="outline">{row.status}</Badge></TableCell>
                   <TableCell className="text-right">
                     <Button

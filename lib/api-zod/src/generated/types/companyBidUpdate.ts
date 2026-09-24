@@ -7,7 +7,7 @@
  */
 
 export interface CompanyBidUpdate {
-  buyerCompany?: string;
+  buyerId?: number;
   contactPerson?: string;
   mobile?: string;
   email?: string;

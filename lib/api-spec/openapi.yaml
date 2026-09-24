@@ -3224,8 +3224,16 @@ components:
           type: integer
         companyId:
           type: integer
+        buyerId:
+          type: ["integer", "null"]
         buyerCompany:
           type: string
+        buyerState:
+          type: ["string", "null"]
+        assignedToId:
+          type: ["integer", "null"]
+        assignedToName:
+          type: ["string", "null"]
         contactPerson:
           type: ["string", "null"]
         mobile:
@@ -3280,10 +3288,10 @@ components:
 
     CompanyBidInput:
       type: object
-      required: [buyerCompany, bidAmount]
+      required: [buyerId, bidAmount]
       properties:
-        buyerCompany:
-          type: string
+        buyerId:
+          type: integer
         contactPerson:
           type: string
         mobile:
@@ -3304,8 +3312,8 @@ components:
     CompanyBidUpdate:
       type: object
       properties:
-        buyerCompany:
-          type: string
+        buyerId:
+          type: integer
         contactPerson:
           type: string
         mobile:

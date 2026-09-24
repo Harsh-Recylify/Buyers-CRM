@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 export const companyBidsTable = pgTable("company_bids", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").notNull(),
+  buyerId: integer("buyer_id"), // links to buyers table; buyerCompany below is derived from it
   buyerCompany: text("buyer_company").notNull(),
   contactPerson: text("contact_person"),
   mobile: text("mobile"),

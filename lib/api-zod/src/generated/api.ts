@@ -525,7 +525,11 @@ export const ListAllCompanyBidsResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.number(),
   "companyId": zod.number(),
+  "buyerId": zod.number().nullish(),
   "buyerCompany": zod.string(),
+  "buyerState": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "assignedToName": zod.string().nullish(),
   "contactPerson": zod.string().nullish(),
   "mobile": zod.string().nullish(),
   "email": zod.string().nullish(),
@@ -552,7 +556,11 @@ export const ListCompanyBidsResponse = zod.object({
   "data": zod.array(zod.object({
   "id": zod.number(),
   "companyId": zod.number(),
+  "buyerId": zod.number().nullish(),
   "buyerCompany": zod.string(),
+  "buyerState": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "assignedToName": zod.string().nullish(),
   "contactPerson": zod.string().nullish(),
   "mobile": zod.string().nullish(),
   "email": zod.string().nullish(),
@@ -574,7 +582,7 @@ export const CreateCompanyBidParams = zod.object({
 })
 
 export const CreateCompanyBidBody = zod.object({
-  "buyerCompany": zod.string(),
+  "buyerId": zod.number(),
   "contactPerson": zod.string().optional(),
   "mobile": zod.string().optional(),
   "email": zod.string().optional(),
@@ -588,7 +596,11 @@ export const CreateCompanyBidBody = zod.object({
 export const CreateCompanyBidResponse = zod.object({
   "id": zod.number(),
   "companyId": zod.number(),
+  "buyerId": zod.number().nullish(),
   "buyerCompany": zod.string(),
+  "buyerState": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "assignedToName": zod.string().nullish(),
   "contactPerson": zod.string().nullish(),
   "mobile": zod.string().nullish(),
   "email": zod.string().nullish(),
@@ -609,7 +621,7 @@ export const UpdateCompanyBidParams = zod.object({
 })
 
 export const UpdateCompanyBidBody = zod.object({
-  "buyerCompany": zod.string().optional(),
+  "buyerId": zod.number().optional(),
   "contactPerson": zod.string().optional(),
   "mobile": zod.string().optional(),
   "email": zod.string().optional(),
@@ -624,7 +636,11 @@ export const UpdateCompanyBidBody = zod.object({
 export const UpdateCompanyBidResponse = zod.object({
   "id": zod.number(),
   "companyId": zod.number(),
+  "buyerId": zod.number().nullish(),
   "buyerCompany": zod.string(),
+  "buyerState": zod.string().nullish(),
+  "assignedToId": zod.number().nullish(),
+  "assignedToName": zod.string().nullish(),
   "contactPerson": zod.string().nullish(),
   "mobile": zod.string().nullish(),
   "email": zod.string().nullish(),

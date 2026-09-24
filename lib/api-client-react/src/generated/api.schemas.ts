@@ -758,7 +758,15 @@ export interface BidHistoryEntry {
 export interface CompanyBid {
   id: number;
   companyId: number;
+  /** @nullable */
+  buyerId?: number | null;
   buyerCompany: string;
+  /** @nullable */
+  buyerState?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
+  /** @nullable */
+  assignedToName?: string | null;
   /** @nullable */
   contactPerson?: string | null;
   /** @nullable */
@@ -795,7 +803,7 @@ export interface CompanyBidWithCompanyListResponse {
 }
 
 export interface CompanyBidInput {
-  buyerCompany: string;
+  buyerId: number;
   contactPerson?: string;
   mobile?: string;
   email?: string;
@@ -807,7 +815,7 @@ export interface CompanyBidInput {
 }
 
 export interface CompanyBidUpdate {
-  buyerCompany?: string;
+  buyerId?: number;
   contactPerson?: string;
   mobile?: string;
   email?: string;

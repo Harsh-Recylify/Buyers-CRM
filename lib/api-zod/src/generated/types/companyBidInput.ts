@@ -7,7 +7,7 @@
  */
 
 export interface CompanyBidInput {
-  buyerCompany: string;
+  buyerId: number;
   contactPerson?: string;
   mobile?: string;
   email?: string;

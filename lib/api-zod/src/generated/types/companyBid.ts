@@ -9,7 +9,15 @@
 export interface CompanyBid {
   id: number;
   companyId: number;
+  /** @nullable */
+  buyerId?: number | null;
   buyerCompany: string;
+  /** @nullable */
+  buyerState?: string | null;
+  /** @nullable */
+  assignedToId?: number | null;
+  /** @nullable */
+  assignedToName?: string | null;
   /** @nullable */
   contactPerson?: string | null;
   /** @nullable */

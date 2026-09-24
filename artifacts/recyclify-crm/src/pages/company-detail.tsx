@@ -3,13 +3,13 @@ import { useParams, Link } from "wouter";
 import {
   useGetCompany, useListActivities, useListNotes, useListTasks,
   useListContacts, useUpdateCompanyStage, useUpdateCompany,
-  useCreateNote, useCreateTask, useListUsers,
+  useCreateNote, useCreateTask, useListUsers, useListBuyers,
   getGetCompanyQueryKey, getListActivitiesQueryKey, getListNotesQueryKey,
   getListTasksQueryKey, getListContactsQueryKey, getListUsersQueryKey,
-  getListCompaniesQueryKey, getGetPipelineQueryKey,
+  getListCompaniesQueryKey, getGetPipelineQueryKey, getListBuyersQueryKey,
   useListCompanyBids, useCreateCompanyBid, useUpdateCompanyBid, useDeleteCompanyBid,
   getListCompanyBidsQueryKey,
-  type CompanyBid,
+  type CompanyBid, type Buyer,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +73,7 @@ function fmtInr(v: number) {
 }
 
 const EMPTY_FORM = {
-  buyerCompany: "",
+  buyerId: "",
   contactPerson: "",
   mobile: "",
   email: "",
@@ -93,6 +93,7 @@ function BidFormModal({
   initialValues,
   isPending,
   title,
+  buyers,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -100,6 +101,7 @@ function BidFormModal({
   initialValues?: Partial<BidFormData>;
   isPending: boolean;
   title: string;
+  buyers: Buyer[];
 }) {
   const [form, setForm] = React.useState<BidFormData>({ ...EMPTY_FORM, ...initialValues });
 
@@ -117,6 +119,8 @@ function BidFormModal({
     onSubmit(form);
   }
 
+  const selectedBuyer = buyers.find(b => String(b.id) === form.buyerId);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -126,8 +130,21 @@ function BidFormModal({
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
-              <Label>Buyer Company <span className="text-red-500">*</span></Label>
-              <Input value={form.buyerCompany} onChange={field("buyerCompany")} placeholder="e.g. Recykal Technologies" required />
+              <Label>Buyer <span className="text-red-500">*</span></Label>
+              <Select value={form.buyerId} onValueChange={v => setForm(f => ({ ...f, buyerId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select a buyer" /></SelectTrigger>
+                <SelectContent>
+                  {buyers.map(b => (
+                    <SelectItem key={b.id} value={String(b.id)}>{b.company || b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedBuyer && (
+                <p className="text-xs text-muted-foreground pt-0.5">
+                  {selectedBuyer.assignedToName ? `Team member: ${selectedBuyer.assignedToName}` : "No team member assigned"}
+                  {selectedBuyer.state ? ` · State: ${selectedBuyer.state}` : ""}
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Contact Person</Label>
@@ -182,6 +199,9 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
   const { data: bidsData, isLoading } = useListCompanyBids(companyId, {
     query: { enabled: !!companyId, queryKey: bidsKey },
   });
+  const buyersKey = getListBuyersQueryKey({ status: "active", limit: 500 });
+  const { data: buyersData } = useListBuyers({ status: "active", limit: 500 }, { query: { queryKey: buyersKey } });
+  const buyers = buyersData?.data ?? [];
   const createBid = useCreateCompanyBid();
   const updateBid = useUpdateCompanyBid();
   const deleteBid = useDeleteCompanyBid();
@@ -200,8 +220,9 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
   }
 
   function handleCreate(form: BidFormData) {
+    if (!form.buyerId) { toast({ title: "Please select a buyer", variant: "destructive" }); return; }
     createBid.mutate(
-      { companyId, data: { buyerCompany: form.buyerCompany, bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
+      { companyId, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
       {
         onSuccess: () => { toast({ title: "Bid added" }); setAddOpen(false); invalidate(); },
         onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -211,8 +232,9 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
 
   function handleUpdate(form: BidFormData) {
     if (!editBid) return;
+    if (!form.buyerId) { toast({ title: "Please select a buyer", variant: "destructive" }); return; }
     updateBid.mutate(
-      { id: editBid.id, data: { buyerCompany: form.buyerCompany, bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
+      { id: editBid.id, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
       {
         onSuccess: () => { toast({ title: "Bid updated" }); setEditBid(null); invalidate(); },
         onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -339,6 +361,12 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
                           {bid.paymentTerms && (
                             <span><span className="font-medium text-foreground/70">Payment:</span> {bid.paymentTerms}</span>
                           )}
+                          {bid.buyerState && (
+                            <span><span className="font-medium text-foreground/70">State:</span> {bid.buyerState}</span>
+                          )}
+                          {bid.assignedToName && (
+                            <span><span className="font-medium text-foreground/70">Team Member:</span> {bid.assignedToName}</span>
+                          )}
                         </div>
 
                         {bid.remarks && (
@@ -385,6 +413,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
         onSubmit={handleCreate}
         isPending={createBid.isPending}
         title="Add Bid"
+        buyers={buyers}
       />
 
       {/* Edit modal */}
@@ -393,7 +422,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
         onOpenChange={v => { if (!v) setEditBid(null); }}
         onSubmit={handleUpdate}
         initialValues={editBid ? {
-          buyerCompany: editBid.buyerCompany,
+          buyerId: editBid.buyerId ? String(editBid.buyerId) : "",
           contactPerson: editBid.contactPerson ?? "",
           mobile: editBid.mobile ?? "",
           email: editBid.email ?? "",
@@ -405,6 +434,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
         } : undefined}
         isPending={updateBid.isPending}
         title="Edit Bid"
+        buyers={buyers}
       />
     </div>
   );
