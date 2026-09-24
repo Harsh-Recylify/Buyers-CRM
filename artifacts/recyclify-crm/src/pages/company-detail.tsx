@@ -131,7 +131,19 @@ function BidFormModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <Label>Buyer <span className="text-red-500">*</span></Label>
-              <Select value={form.buyerId} onValueChange={v => setForm(f => ({ ...f, buyerId: v }))}>
+              <Select
+                value={form.buyerId}
+                onValueChange={v => {
+                  const buyer = buyers.find(b => String(b.id) === v);
+                  setForm(f => ({
+                    ...f,
+                    buyerId: v,
+                    contactPerson: buyer?.name ?? f.contactPerson,
+                    mobile: buyer?.phone ?? f.mobile,
+                    email: buyer?.email ?? f.email,
+                  }));
+                }}
+              >
                 <SelectTrigger><SelectValue placeholder="Select a buyer" /></SelectTrigger>
                 <SelectContent>
                   {buyers.map(b => (
