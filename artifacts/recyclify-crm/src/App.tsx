@@ -21,7 +21,6 @@ import Buyers from "@/pages/buyers";
 import BuyerDetail from "@/pages/buyer-detail";
 import Bids from "@/pages/bids";
 import BidDetail from "@/pages/bid-detail";
-import Assets from "@/pages/assets";
 import Tasks from "@/pages/tasks";
 import Calendar from "@/pages/calendar";
 import Activities from "@/pages/activities";
@@ -57,7 +56,6 @@ function Router() {
       <ProtectedRoute path="/buyers" component={() => <Layout><Buyers /></Layout>} />
       <ProtectedRoute path="/bids/:id" component={() => <Layout><BidDetail /></Layout>} />
       <ProtectedRoute path="/bids" component={() => <Layout><Bids /></Layout>} />
-      <ProtectedRoute path="/assets" component={() => <Layout><Assets /></Layout>} />
       <ProtectedRoute path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <ProtectedRoute path="/calendar" component={() => <Layout><Calendar /></Layout>} />
       <ProtectedRoute path="/activities" component={() => <Layout><Activities /></Layout>} />
