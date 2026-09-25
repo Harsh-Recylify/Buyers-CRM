@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, buyersTable, usersTable } from "@workspace/db";
+import { db, buyersTable, usersTable, bidQuotesTable, bidsTable, companyBidsTable } from "@workspace/db";
 import { eq, ilike, and, count, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
@@ -150,6 +150,33 @@ router.delete("/buyers/:id", requireAuth, async (req, res): Promise<void> => {
   // bids.winning_buyer_id on every bid this buyer was ever involved in.
   const [buyer] = await db.update(buyersTable).set({ status: "inactive" }).where(eq(buyersTable.id, id)).returning();
   if (!buyer) { res.status(404).json({ error: "Buyer not found" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/buyers/:id/permanent", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [buyer] = await db.select().from(buyersTable).where(eq(buyersTable.id, id));
+  if (!buyer) { res.status(404).json({ error: "Buyer not found" }); return; }
+
+  // Permanent delete is only safe when nothing references this buyer —
+  // otherwise it silently orphans bid_quotes.buyer_id, bids.winning_buyer_id,
+  // and company_bids.buyer_id on every bid this buyer was ever involved in.
+  const [[quote], [wonBid], [companyBid]] = await Promise.all([
+    db.select({ id: bidQuotesTable.id }).from(bidQuotesTable).where(eq(bidQuotesTable.buyerId, id)).limit(1),
+    db.select({ id: bidsTable.id }).from(bidsTable).where(eq(bidsTable.winningBuyerId, id)).limit(1),
+    db.select({ id: companyBidsTable.id }).from(companyBidsTable).where(eq(companyBidsTable.buyerId, id)).limit(1),
+  ]);
+  if (quote || wonBid || companyBid) {
+    res.status(409).json({ error: "This buyer has bid history and can't be permanently deleted. Deactivate it instead to preserve that history." });
+    return;
+  }
+
+  await db.delete(buyersTable).where(eq(buyersTable.id, id));
+  await logActivity({
+    type: "buyer_deleted",
+    description: `Buyer "${buyer.name}" was permanently deleted`,
+    entityType: "buyer", entityName: buyer.name, userId: req.user?.id,
+  });
   res.sendStatus(204);
 });
 

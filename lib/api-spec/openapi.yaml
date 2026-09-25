@@ -1151,6 +1151,20 @@ paths:
         "204":
           description: Buyer deleted
 
+  /buyers/{id}/permanent:
+    delete:
+      operationId: deleteBuyerPermanently
+      tags: [buyers]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Buyer permanently deleted
+
   /buyers/import:
     post:
       operationId: importBuyers

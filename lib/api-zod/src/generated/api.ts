@@ -1369,6 +1369,13 @@ export const DeleteBuyerParams = zod.object({
 export const DeleteBuyerResponse = zod.void()
 
 
+export const DeleteBuyerPermanentlyParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteBuyerPermanentlyResponse = zod.void()
+
+
 export const ImportBuyersBody = zod.object({
   "rows": zod.array(zod.object({
   "name": zod.string().optional(),

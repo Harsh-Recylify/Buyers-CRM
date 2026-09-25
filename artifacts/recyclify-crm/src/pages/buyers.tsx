@@ -2,7 +2,7 @@ import React from "react";
 import * as XLSX from "xlsx";
 import {
   useListBuyers, getListBuyersQueryKey,
-  useCreateBuyer, useUpdateBuyer, useDeleteBuyer,
+  useCreateBuyer, useUpdateBuyer, useDeleteBuyer, useDeleteBuyerPermanently,
   useListUsers, getListUsersQueryKey,
   useImportBuyers, type BuyerImportResult,
 } from "@workspace/api-client-react";
@@ -103,6 +103,7 @@ export default function Buyers() {
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
+  const [hardDeleting, setHardDeleting] = React.useState<{ id: number; name: string } | null>(null);
   const [form, setForm] = React.useState<BuyerFormData>(emptyForm());
   const [showImport, setShowImport] = React.useState(false);
   const [importRows, setImportRows] = React.useState<ImportRow[]>([]);
@@ -154,6 +155,17 @@ export default function Buyers() {
         setDeletingId(null);
       },
       onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    },
+  });
+
+  const deleteBuyerPermanently = useDeleteBuyerPermanently({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: "Buyer permanently deleted" });
+        queryClient.invalidateQueries({ queryKey: getListBuyersQueryKey() });
+        setHardDeleting(null);
+      },
+      onError: (e: any) => toast({ title: "Couldn't delete buyer", description: e.message, variant: "destructive" }),
     },
   });
 
@@ -390,10 +402,16 @@ export default function Buyers() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openEdit(buyer)}>Edit Buyer</DropdownMenuItem>
                             {buyer.status === "active" ? (
-                              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingId(buyer.id)}>Deactivate</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDeletingId(buyer.id)}>Deactivate</DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => handleActivate(buyer.id)}>Activate</DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setHardDeleting({ id: buyer.id, name: buyer.name })}
+                            >
+                              Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -498,6 +516,29 @@ export default function Buyers() {
               onClick={() => deletingId && deleteBuyer.mutate({ id: deletingId })}
             >
               Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Permanent Delete Confirmation */}
+      <AlertDialog open={hardDeleting !== null} onOpenChange={(open) => { if (!open) setHardDeleting(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {hardDeleting?.name} permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the buyer and can't be undone. If this buyer has any bid
+              history, the deletion will be blocked — deactivate it instead to preserve that history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteBuyerPermanently.isPending}
+              onClick={() => hardDeleting && deleteBuyerPermanently.mutate({ id: hardDeleting.id })}
+            >
+              {deleteBuyerPermanently.isPending ? "Deleting..." : "Delete Permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -4014,6 +4014,70 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getDeleteBuyerMutationOptions(options));
     }
 
+export const getDeleteBuyerPermanentlyUrl = (id: number,) => {
+
+
+
+
+  return `/api/buyers/${id}/permanent`
+}
+
+export const deleteBuyerPermanently = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteBuyerPermanentlyUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteBuyerPermanentlyMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBuyerPermanently>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBuyerPermanently>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteBuyerPermanently'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBuyerPermanently>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteBuyerPermanently(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBuyerPermanentlyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBuyerPermanently>>>
+
+    export type DeleteBuyerPermanentlyMutationError = ErrorType<unknown>
+
+    export const useDeleteBuyerPermanently = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBuyerPermanently>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBuyerPermanently>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteBuyerPermanentlyMutationOptions(options));
+    }
+
 export const getImportBuyersUrl = () => {
 
 
