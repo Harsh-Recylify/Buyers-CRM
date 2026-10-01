@@ -35,6 +35,38 @@ const SORT_OPTIONS: Record<string, string> = {
   lowest: "Lowest Bid",
 };
 
+const PERIOD_OPTIONS: Record<string, string> = {
+  all: "All Time",
+  today: "Today",
+  yesterday: "Yesterday",
+  week: "This Week",
+  month: "This Month",
+};
+
+function matchesPeriod(dateStr: string, period: string): boolean {
+  if (period === "all") return true;
+  const t = new Date(dateStr).getTime();
+  const now = new Date();
+  if (period === "today") {
+    const start = new Date(now); start.setHours(0, 0, 0, 0);
+    return t >= start.getTime();
+  }
+  if (period === "yesterday") {
+    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+    const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    return t >= yesterdayStart.getTime() && t < todayStart.getTime();
+  }
+  if (period === "week") {
+    const start = new Date(now); start.setDate(start.getDate() - 7);
+    return t >= start.getTime();
+  }
+  if (period === "month") {
+    const start = new Date(now); start.setDate(1); start.setHours(0, 0, 0, 0);
+    return t >= start.getTime();
+  }
+  return true;
+}
+
 export default function Bids() {
   const { data, isLoading } = useListBids({}, { query: { queryKey: getListBidsQueryKey({}) } });
   const { data: companyBidsData, isLoading: companyBidsLoading } = useListAllCompanyBids({
@@ -43,6 +75,7 @@ export default function Bids() {
   const [, setLocation] = useLocation();
   const [deleting, setDeleting] = React.useState<{ kind: "bid" | "companyBid"; id: number } | null>(null);
   const [statusFilter, setStatusFilter] = React.useState("all");
+  const [periodFilter, setPeriodFilter] = React.useState("all");
   const [sortBy, setSortBy] = React.useState<"newest" | "highest" | "lowest">("newest");
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -88,6 +121,7 @@ export default function Bids() {
 
   const visibleRows = React.useMemo(() => {
     let result = statusFilter === "all" ? rows : rows.filter(r => r.status === statusFilter);
+    result = result.filter(r => matchesPeriod(r.createdAt, periodFilter));
     result = [...result];
     if (sortBy === "highest") {
       result.sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
@@ -97,7 +131,7 @@ export default function Bids() {
       result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
     return result;
-  }, [rows, statusFilter, sortBy]);
+  }, [rows, statusFilter, periodFilter, sortBy]);
 
   function confirmDelete() {
     if (!deleting) return;
@@ -118,6 +152,12 @@ export default function Bids() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={periodFilter} onValueChange={setPeriodFilter}>
+          <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Date range" /></SelectTrigger>
+          <SelectContent>
+            {Object.entries(PERIOD_OPTIONS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={v => setSortBy(v as typeof sortBy)}>
