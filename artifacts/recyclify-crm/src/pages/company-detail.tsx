@@ -68,11 +68,7 @@ const EMPTY_FORM = {
   buyerId: "",
   contactPerson: "",
   mobile: "",
-  email: "",
   bidAmount: "",
-  location: "",
-  pickupTimeline: "",
-  paymentTerms: "",
   remarks: "",
 };
 
@@ -132,7 +128,6 @@ function BidFormModal({
                     buyerId: v,
                     contactPerson: buyer?.name ?? f.contactPerson,
                     mobile: buyer?.phone ?? f.mobile,
-                    email: buyer?.email ?? f.email,
                   }));
                 }}
               >
@@ -159,24 +154,8 @@ function BidFormModal({
               <Input value={form.mobile} onChange={field("mobile")} placeholder="+91 98765 43210" />
             </div>
             <div className="col-span-2 space-y-1">
-              <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={field("email")} placeholder="buyer@company.com" />
-            </div>
-            <div className="space-y-1">
               <Label>Bid Amount (₹) <span className="text-red-500">*</span></Label>
               <Input type="number" min="0" step="0.01" value={form.bidAmount} onChange={field("bidAmount")} placeholder="0" required />
-            </div>
-            <div className="space-y-1">
-              <Label>Location</Label>
-              <Input value={form.location} onChange={field("location")} placeholder="City / State" />
-            </div>
-            <div className="space-y-1">
-              <Label>Pickup Timeline</Label>
-              <Input value={form.pickupTimeline} onChange={field("pickupTimeline")} placeholder="e.g. Within 7 days" />
-            </div>
-            <div className="space-y-1">
-              <Label>Payment Terms</Label>
-              <Input value={form.paymentTerms} onChange={field("paymentTerms")} placeholder="e.g. Net 30, Advance" />
             </div>
             <div className="col-span-2 space-y-1">
               <Label>Remarks</Label>
@@ -226,7 +205,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
   function handleCreate(form: BidFormData) {
     if (!form.buyerId) { toast({ title: "Please select a buyer", variant: "destructive" }); return; }
     createBid.mutate(
-      { companyId, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
+      { companyId, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, remarks: form.remarks || undefined } },
       {
         onSuccess: () => { toast({ title: "Bid added" }); setAddOpen(false); invalidate(); },
         onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -238,7 +217,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
     if (!editBid) return;
     if (!form.buyerId) { toast({ title: "Please select a buyer", variant: "destructive" }); return; }
     updateBid.mutate(
-      { id: editBid.id, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, email: form.email || undefined, location: form.location || undefined, pickupTimeline: form.pickupTimeline || undefined, paymentTerms: form.paymentTerms || undefined, remarks: form.remarks || undefined } },
+      { id: editBid.id, data: { buyerId: Number(form.buyerId), bidAmount: Number(form.bidAmount), contactPerson: form.contactPerson || undefined, mobile: form.mobile || undefined, remarks: form.remarks || undefined } },
       {
         onSuccess: () => { toast({ title: "Bid updated" }); setEditBid(null); invalidate(); },
         onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -353,18 +332,6 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
                           {bid.mobile && (
                             <span><span className="font-medium text-foreground/70">Mobile:</span> {bid.mobile}</span>
                           )}
-                          {bid.email && (
-                            <span><span className="font-medium text-foreground/70">Email:</span> {bid.email}</span>
-                          )}
-                          {bid.location && (
-                            <span><span className="font-medium text-foreground/70">Location:</span> {bid.location}</span>
-                          )}
-                          {bid.pickupTimeline && (
-                            <span><span className="font-medium text-foreground/70">Pickup:</span> {bid.pickupTimeline}</span>
-                          )}
-                          {bid.paymentTerms && (
-                            <span><span className="font-medium text-foreground/70">Payment:</span> {bid.paymentTerms}</span>
-                          )}
                           {bid.buyerState && (
                             <span><span className="font-medium text-foreground/70">State:</span> {bid.buyerState}</span>
                           )}
@@ -429,11 +396,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
           buyerId: editBid.buyerId ? String(editBid.buyerId) : "",
           contactPerson: editBid.contactPerson ?? "",
           mobile: editBid.mobile ?? "",
-          email: editBid.email ?? "",
           bidAmount: String(editBid.bidAmount),
-          location: editBid.location ?? "",
-          pickupTimeline: editBid.pickupTimeline ?? "",
-          paymentTerms: editBid.paymentTerms ?? "",
           remarks: editBid.remarks ?? "",
         } : undefined}
         isPending={updateBid.isPending}
