@@ -60,6 +60,7 @@ router.get("/company-bids", requireAuth, async (_req, res): Promise<void> => {
       createdAt: companyBidsTable.createdAt,
       updatedAt: companyBidsTable.updatedAt,
       companyName: companiesTable.name,
+      companyStage: companiesTable.stage,
     })
     .from(companyBidsTable)
     .innerJoin(companiesTable, eq(companiesTable.id, companyBidsTable.companyId))
@@ -68,7 +69,7 @@ router.get("/company-bids", requireAuth, async (_req, res): Promise<void> => {
 
   const data = await Promise.all(rows.map(async r => {
     const buyerInfo = await resolveBuyer(r.buyerId);
-    return formatRow(r as any, buyerInfo, { companyName: r.companyName });
+    return formatRow(r as any, buyerInfo, { companyName: r.companyName, companyStage: r.companyStage });
   }));
 
   res.json({ data });

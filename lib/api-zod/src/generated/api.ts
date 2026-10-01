@@ -572,7 +572,8 @@ export const ListAllCompanyBidsResponse = zod.object({
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 }).and(zod.object({
-  "companyName": zod.string().nullable()
+  "companyName": zod.string().nullable(),
+  "companyStage": zod.string().nullish()
 })))
 })
 
@@ -1699,6 +1700,7 @@ export const ListBidsResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),
@@ -1736,6 +1738,7 @@ export const CreateBidResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),
@@ -1762,6 +1765,7 @@ export const GetBidResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),
@@ -1795,6 +1799,7 @@ export const UpdateBidResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),
@@ -1875,6 +1880,7 @@ export const AwardBidResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),
@@ -2111,6 +2117,7 @@ export const GetDashboardRecentResponse = zod.object({
   "title": zod.string(),
   "companyId": zod.number(),
   "companyName": zod.string().nullish(),
+  "companyStage": zod.string().nullish(),
   "status": zod.string(),
   "description": zod.string().nullish(),
   "expiryDate": zod.string().nullish(),

@@ -720,6 +720,8 @@ export interface Bid {
   companyId: number;
   /** @nullable */
   companyName?: string | null;
+  /** @nullable */
+  companyStage?: string | null;
   status: string;
   /** @nullable */
   description?: string | null;
@@ -850,6 +852,8 @@ export interface CompanyBidListResponse {
 export type CompanyBidWithCompany = CompanyBid & ({
   /** @nullable */
   companyName: string | null;
+  /** @nullable */
+  companyStage?: string | null;
 });
 
 export interface CompanyBidWithCompanyListResponse {

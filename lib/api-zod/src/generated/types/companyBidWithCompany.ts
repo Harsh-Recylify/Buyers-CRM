@@ -10,4 +10,6 @@ import type { CompanyBid } from './companyBid';
 export type CompanyBidWithCompany = CompanyBid & ({
   /** @nullable */
   companyName: string | null;
+  /** @nullable */
+  companyStage?: string | null;
 });

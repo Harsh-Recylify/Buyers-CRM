@@ -3,6 +3,8 @@ import {
   useListBids, getListBidsQueryKey, useDeleteBid,
   useListAllCompanyBids, getListAllCompanyBidsQueryKey, useDeleteCompanyBid,
   getGetDashboardStatsQueryKey, getGetDashboardChartsQueryKey, getGetDashboardRecentQueryKey,
+  useListPipelineBoards, getListPipelineBoardsQueryKey,
+  useListPipelineStages, getListPipelineStagesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -21,13 +23,12 @@ type UnifiedRow = {
   id: number;
   companyId: number;
   companyName: string | null;
+  companyStage: string | null;
   amount: number | null;
   status: string;
   createdAt: string;
   assignedToName: string | null;
 };
-
-const STATUS_OPTIONS = ["pending", "open", "negotiation", "awarded", "accepted", "rejected", "cancelled", "completed"];
 
 const SORT_OPTIONS: Record<string, string> = {
   newest: "Newest First",
@@ -74,11 +75,26 @@ export default function Bids() {
   });
   const [, setLocation] = useLocation();
   const [deleting, setDeleting] = React.useState<{ kind: "bid" | "companyBid"; id: number } | null>(null);
-  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [stageFilter, setStageFilter] = React.useState("all");
   const [periodFilter, setPeriodFilter] = React.useState("all");
   const [sortBy, setSortBy] = React.useState<"newest" | "highest" | "lowest">("newest");
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Both pipeline boards share the same stage names, so the main board's
+  // list is the canonical source for the stage filter/colors here.
+  const { data: boardsData } = useListPipelineBoards({ query: { queryKey: getListPipelineBoardsQueryKey() } });
+  const mainBoard = boardsData?.data.find((b) => b.isDefault) ?? boardsData?.data[0];
+  const { data: stagesData } = useListPipelineStages(mainBoard?.id ?? 0, {
+    query: { enabled: !!mainBoard, queryKey: getListPipelineStagesQueryKey(mainBoard?.id ?? 0) },
+  });
+  const pipelineStages = stagesData?.data ?? [];
+  const stageColorMap = new Map(pipelineStages.map((s) => [s.name, s.color]));
+
+  const getStageBadgeStyle = (stage: string | null): React.CSSProperties => {
+    const color = stage ? stageColorMap.get(stage) ?? "#6b7280" : "#6b7280";
+    return { color, borderColor: `${color}40`, background: `${color}14` };
+  };
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: getListBidsQueryKey() });
@@ -107,12 +123,14 @@ export default function Bids() {
     const fromBids: UnifiedRow[] = (data?.data ?? []).map((b) => ({
       key: `bid-${b.id}`, kind: "bid", id: b.id,
       companyId: b.companyId, companyName: b.companyName ?? null,
+      companyStage: b.companyStage ?? null,
       amount: b.highestBid ?? null, status: b.status, createdAt: b.createdAt,
       assignedToName: null,
     }));
     const fromCompanyBids: UnifiedRow[] = (companyBidsData?.data ?? []).map((cb) => ({
       key: `companyBid-${cb.id}`, kind: "companyBid", id: cb.id,
       companyId: cb.companyId, companyName: cb.companyName ?? null,
+      companyStage: cb.companyStage ?? null,
       amount: cb.bidAmount, status: cb.status, createdAt: cb.createdAt,
       assignedToName: cb.assignedToName ?? null,
     }));
@@ -120,7 +138,7 @@ export default function Bids() {
   }, [data, companyBidsData]);
 
   const visibleRows = React.useMemo(() => {
-    let result = statusFilter === "all" ? rows : rows.filter(r => r.status === statusFilter);
+    let result = stageFilter === "all" ? rows : rows.filter(r => r.companyStage === stageFilter);
     result = result.filter(r => matchesPeriod(r.createdAt, periodFilter));
     result = [...result];
     if (sortBy === "highest") {
@@ -131,7 +149,7 @@ export default function Bids() {
       result.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
     return result;
-  }, [rows, statusFilter, periodFilter, sortBy]);
+  }, [rows, stageFilter, periodFilter, sortBy]);
 
   function confirmDelete() {
     if (!deleting) return;
@@ -147,11 +165,11 @@ export default function Bids() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44 bg-white"><SelectValue placeholder="Status" /></SelectTrigger>
+        <Select value={stageFilter} onValueChange={setStageFilter}>
+          <SelectTrigger className="w-48 bg-white"><SelectValue placeholder="Pipeline Stage" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            <SelectItem value="all">All Stages</SelectItem>
+            {pipelineStages.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={periodFilter} onValueChange={setPeriodFilter}>
@@ -175,7 +193,7 @@ export default function Bids() {
               <TableHead>Company</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Team Member</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Stage</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -200,7 +218,13 @@ export default function Bids() {
                   <TableCell className="font-medium">{row.companyName || '-'}</TableCell>
                   <TableCell>{row.amount != null ? `₹${row.amount.toLocaleString()}` : '-'}</TableCell>
                   <TableCell>{row.assignedToName || '-'}</TableCell>
-                  <TableCell><Badge variant="outline">{row.status}</Badge></TableCell>
+                  <TableCell>
+                    {row.companyStage ? (
+                      <Badge variant="outline" className="font-medium" style={getStageBadgeStyle(row.companyStage)}>
+                        {row.companyStage}
+                      </Badge>
+                    ) : '-'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"

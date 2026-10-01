@@ -8,7 +8,7 @@ import { logActivity } from "../lib/activity";
 const router = Router();
 
 async function formatBid(b: typeof bidsTable.$inferSelect) {
-  const [co] = await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, b.companyId));
+  const [co] = await db.select({ name: companiesTable.name, stage: companiesTable.stage }).from(companiesTable).where(eq(companiesTable.id, b.companyId));
   let winningBuyerName: string | null = null;
   let createdByName: string | null = null;
   if (b.winningBuyerId) {
@@ -26,6 +26,7 @@ async function formatBid(b: typeof bidsTable.$inferSelect) {
   const averageBid = amounts.length ? amounts.reduce((a, b) => a + b, 0) / amounts.length : null;
   return {
     id: b.id, title: b.title, companyId: b.companyId, companyName: co?.name ?? null,
+    companyStage: co?.stage ?? null,
     status: b.status, description: b.description, expiryDate: b.expiryDate,
     winningBuyerId: b.winningBuyerId, winningBuyerName,
     winningAmount: b.winningAmount ? Number(b.winningAmount) : null,

@@ -3238,6 +3238,8 @@ components:
           type: integer
         companyName:
           type: ["string", "null"]
+        companyStage:
+          type: ["string", "null"]
         status:
           type: string
         description:
@@ -3435,6 +3437,8 @@ components:
           required: [companyName]
           properties:
             companyName:
+              type: ["string", "null"]
+            companyStage:
               type: ["string", "null"]
 
     CompanyBidWithCompanyListResponse:

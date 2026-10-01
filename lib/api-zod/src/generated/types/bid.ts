@@ -12,6 +12,8 @@ export interface Bid {
   companyId: number;
   /** @nullable */
   companyName?: string | null;
+  /** @nullable */
+  companyStage?: string | null;
   status: string;
   /** @nullable */
   description?: string | null;
