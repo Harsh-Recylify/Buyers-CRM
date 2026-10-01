@@ -1,15 +1,13 @@
 import React from "react";
-import { useGetDashboardStats, useGetDashboardCharts, useGetDashboardRecent } from "@workspace/api-client-react";
+import { useGetDashboardStats, useGetDashboardCharts } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Activity, Gavel, DollarSign, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
+import { Building2, Gavel, DollarSign, AlertCircle, ArrowUpRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Badge } from "@/components/ui/badge";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useGetDashboardStats();
   const { data: charts, isLoading: chartsLoading } = useGetDashboardCharts();
-  const { data: recent, isLoading: recentLoading } = useGetDashboardRecent();
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,8 +89,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4">
+        <Card>
           <CardHeader>
             <CardTitle>Pipeline Revenue Pipeline</CardTitle>
             <CardDescription>Expected revenue across stages</CardDescription>
@@ -107,13 +105,13 @@ export default function Dashboard() {
                 <BarChart data={charts.pipelineFunnel}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                   <XAxis dataKey="stage" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
                     tickFormatter={(value) => `₹${value >= 1000 ? (value / 1000) + 'k' : value}`}
                     tick={{ fontSize: 12 }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Expected Revenue']}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                   />
@@ -123,54 +121,6 @@ export default function Dashboard() {
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
                 No pipeline data available
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest actions across your CRM</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentLoading ? (
-              <div className="space-y-4">
-                {Array(5).fill(0).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <Skeleton className="h-9 w-9 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {(recent?.recentActivities || []).slice(0, 5).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-4">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      {activity.type === 'note' ? <Activity className="h-4 w-4" /> : 
-                       activity.type === 'bid' ? <Gavel className="h-4 w-4" /> :
-                       <Activity className="h-4 w-4" />}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium leading-none">
-                        {activity.userName} <span className="font-normal text-muted-foreground">{activity.description}</span>
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center">
-                        <Clock className="mr-1 h-3 w-3" />
-                        {new Date(activity.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {(!recent?.recentActivities || recent.recentActivities.length === 0) && (
-                  <div className="text-center text-muted-foreground py-8 text-sm">
-                    No recent activities
-                  </div>
-                )}
               </div>
             )}
           </CardContent>
