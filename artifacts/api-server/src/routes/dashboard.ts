@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { db, companiesTable, activitiesTable, bidsTable, buyersTable, recyclersTable, tasksTable, usersTable } from "@workspace/db";
-import { eq, inArray, sql, isNull, desc } from "drizzle-orm";
+import { db, companiesTable, activitiesTable, bidsTable, buyersTable, recyclersTable, tasksTable, usersTable, pipelineStagesTable } from "@workspace/db";
+import { eq, inArray, sql, isNull, desc, asc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { ensureDefaultBoard } from "./pipeline-boards";
 
 const router = Router();
 
@@ -24,9 +25,9 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
       (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.created_at >= ${monthStart.toISOString()}) AS monthly_bids,
       (SELECT COUNT(*) FROM buyers WHERE status = 'active') AS active_buyers,
       (SELECT COUNT(*) FROM recyclers WHERE status = 'active') AS active_recyclers,
-      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage NOT IN ('Won', 'Lost')) AS active_deals,
-      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Won') AS won_deals,
-      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Lost') AS lost_deals,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage NOT IN ('Vendor Closed', 'Quote Lost')) AS active_deals,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Vendor Closed') AS won_deals,
+      (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Quote Lost') AS lost_deals,
       (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'open') AS open_deals,
       (SELECT COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'awarded') AS total_revenue,
       (SELECT COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) FROM companies WHERE deleted_at IS NULL) AS expected_revenue
@@ -69,7 +70,11 @@ router.get("/dashboard/charts", requireAuth, async (req, res): Promise<void> => 
     GROUP BY month, month_start ORDER BY month_start ASC
   `);
 
-  const stages = ["New Lead","Contacted","Meeting Scheduled","Site Inspection","Quotation Sent","Bid Open","Negotiation","Approved","Pickup Scheduled","Material Collected","Completed","Won","Lost"];
+  const defaultBoard = await ensureDefaultBoard();
+  const stageRows = await db.select().from(pipelineStagesTable)
+    .where(eq(pipelineStagesTable.boardId, defaultBoard.id))
+    .orderBy(asc(pipelineStagesTable.position));
+  const stages = stageRows.map(s => s.name);
   const pipelineRows = await db.execute(sql`
     SELECT stage, COUNT(*) as count, COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) as value
     FROM companies WHERE deleted_at IS NULL GROUP BY stage
@@ -103,7 +108,7 @@ router.get("/dashboard/charts", requireAuth, async (req, res): Promise<void> => 
 
   const topManagersRows = await db.execute(sql`
     SELECT u.id, u.name, COUNT(DISTINCT c.id) as companies,
-           COUNT(DISTINCT CASE WHEN c.stage = 'Won' THEN c.id END) as deals
+           COUNT(DISTINCT CASE WHEN c.stage = 'Vendor Closed' THEN c.id END) as deals
     FROM users u
     LEFT JOIN companies c ON c.assigned_manager_id = u.id AND c.deleted_at IS NULL
     GROUP BY u.id, u.name ORDER BY companies DESC LIMIT 5
