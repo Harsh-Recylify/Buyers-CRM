@@ -90,10 +90,7 @@ const INDIAN_STATES = [
 
 type CompanyFormData = {
   name: string;
-  address: string;
   state: string;
-  city: string;
-  pincode: string;
   stage: string;
   priority: string;
   expectedScrapWeight: string;
@@ -104,7 +101,7 @@ type CompanyFormData = {
 
 const emptyForm = (): CompanyFormData => ({
   name: "",
-  address: "", state: "", city: "", pincode: "",
+  state: "",
   stage: "New Lead", priority: "medium",
   expectedScrapWeight: "", expectedRevenue: "", expectedPickupDate: "", notes: "",
 });
@@ -249,10 +246,7 @@ export default function Companies() {
     setEditingId(company.id);
     setForm({
       name: company.name || "",
-      address: company.address || "",
       state: company.state || "",
-      city: company.city || "",
-      pincode: company.pincode || "",
       stage: company.stage || "New Lead",
       priority: company.priority || "medium",
       expectedScrapWeight: company.expectedScrapWeight ? String(company.expectedScrapWeight) : "",
@@ -271,10 +265,7 @@ export default function Companies() {
     }
     const payload = {
       name: form.name.trim(),
-      ...(form.address && { address: form.address }),
       ...(form.state && { state: form.state }),
-      ...(form.city && { city: form.city }),
-      ...(form.pincode && { pincode: form.pincode }),
       stage: form.stage,
       priority: form.priority,
       ...(form.expectedScrapWeight && { expectedScrapWeight: parseFloat(form.expectedScrapWeight) }),
@@ -538,11 +529,6 @@ export default function Companies() {
                 <Input id="name" placeholder="Acme Corp Pvt. Ltd." value={form.name} onChange={setInput("name")} required />
               </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="123 Main Street" value={form.address} onChange={setInput("address")} />
-              </div>
-
               <div className="space-y-1.5">
                 <Label>State</Label>
                 <Select value={form.state} onValueChange={set("state")}>
@@ -551,16 +537,6 @@ export default function Companies() {
                     {INDIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" placeholder="Mumbai" value={form.city} onChange={setInput("city")} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="pincode">Pincode</Label>
-                <Input id="pincode" placeholder="400001" value={form.pincode} onChange={setInput("pincode")} />
               </div>
 
               <div className="space-y-1.5">
