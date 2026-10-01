@@ -2412,7 +2412,11 @@ components:
       properties:
         name:
           type: string
-        city:
+        state:
+          type: string
+        pipelineType:
+          type: string
+        expectedRevenue:
           type: string
 
     CompanyImportInput:

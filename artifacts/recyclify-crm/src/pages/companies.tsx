@@ -26,9 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const IMPORT_COLUMNS = ["Company Name", "City"];
+const IMPORT_COLUMNS = ["Company Name", "State", "Pipeline", "Expected Target"];
 
-type ImportRow = { name: string; city: string };
+type ImportRow = { name: string; state: string; pipelineType: string; expectedRevenue: string };
 
 function normalizeHeader(h: unknown) {
   return String(h ?? "").trim().toLowerCase().replace(/[^a-z]/g, "");
@@ -37,7 +37,12 @@ function normalizeHeader(h: unknown) {
 const HEADER_MAP: Record<string, keyof ImportRow> = {
   companyname: "name",
   name: "name",
-  city: "city",
+  state: "state",
+  pipeline: "pipelineType",
+  pipelinetype: "pipelineType",
+  expectedtarget: "expectedRevenue",
+  target: "expectedRevenue",
+  expectedrevenue: "expectedRevenue",
 };
 
 function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
@@ -57,7 +62,7 @@ function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
   for (let r = 1; r < grid.length; r++) {
     const line = grid[r];
     if (!line || line.every((c) => String(c ?? "").trim() === "")) continue;
-    const row: ImportRow = { name: "", city: "" };
+    const row: ImportRow = { name: "", state: "", pipelineType: "", expectedRevenue: "" };
     Object.entries(colMap).forEach(([idx, field]) => {
       row[field] = String(line[Number(idx)] ?? "").trim();
     });
@@ -69,7 +74,7 @@ function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
     IMPORT_COLUMNS,
-    ["Acme Corp Pvt. Ltd.", "Mumbai"],
+    ["Acme Corp Pvt. Ltd.", "Maharashtra", "Main Pipeline", "500000"],
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Companies");
@@ -706,13 +711,17 @@ export default function Companies() {
                   <TableBody>
                     <TableRow>
                       <TableCell className="text-muted-foreground">Acme Corp Pvt. Ltd.</TableCell>
-                      <TableCell className="text-muted-foreground">Mumbai</TableCell>
+                      <TableCell className="text-muted-foreground">Maharashtra</TableCell>
+                      <TableCell className="text-muted-foreground">Main Pipeline</TableCell>
+                      <TableCell className="text-muted-foreground">500000</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </div>
               <p className="text-xs text-muted-foreground mt-1.5">
-                Only "Company Name" is required. New companies are added to the "New Lead" stage.
+                Only "Company Name" is required. "Pipeline" accepts "Main Pipeline" or "Battery Pipeline"
+                (defaults to Main if left blank or unrecognized). New companies are added to the first
+                stage of their pipeline.
               </p>
               <Button type="button" variant="link" size="sm" className="px-0 h-auto mt-1 gap-1" onClick={downloadTemplate}>
                 <Download className="h-3.5 w-3.5" /> Download blank template

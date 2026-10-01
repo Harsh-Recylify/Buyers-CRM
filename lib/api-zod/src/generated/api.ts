@@ -360,7 +360,9 @@ export const CreateCompanyResponse = zod.object({
 export const ImportCompaniesBody = zod.object({
   "rows": zod.array(zod.object({
   "name": zod.string().optional(),
-  "city": zod.string().optional()
+  "state": zod.string().optional(),
+  "pipelineType": zod.string().optional(),
+  "expectedRevenue": zod.string().optional()
 }))
 })
 

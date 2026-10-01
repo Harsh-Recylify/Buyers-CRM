@@ -252,7 +252,9 @@ export interface CompanyUpdate {
 
 export interface CompanyImportRow {
   name?: string;
-  city?: string;
+  state?: string;
+  pipelineType?: string;
+  expectedRevenue?: string;
 }
 
 export interface CompanyImportInput {

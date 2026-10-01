@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, companiesTable, usersTable } from "@workspace/db";
+import { db, companiesTable, usersTable, pipelineBoardsTable, pipelineStagesTable } from "@workspace/db";
 import { eq, ilike, or, count, and, isNull, desc, asc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
@@ -83,6 +83,20 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   if (rows.length === 0) { res.status(400).json({ error: "rows array is required" }); return; }
 
+  // Resolve each pipeline board's first stage so an imported company lands on
+  // a real, currently-configured stage rather than a hardcoded name that may
+  // no longer exist on that board.
+  const boards = await db.select().from(pipelineBoardsTable);
+  const firstStageByType = new Map<string, string>();
+  for (const board of boards) {
+    if (firstStageByType.has(board.pipelineType)) continue;
+    const [firstStage] = await db.select().from(pipelineStagesTable)
+      .where(eq(pipelineStagesTable.boardId, board.id))
+      .orderBy(asc(pipelineStagesTable.position))
+      .limit(1);
+    if (firstStage) firstStageByType.set(board.pipelineType, firstStage.name);
+  }
+
   const errors: { row: number; name: string | null; error: string }[] = [];
   let imported = 0;
   let failed = 0;
@@ -97,11 +111,29 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
       continue;
     }
 
+    let pipelineType = "main";
+    const pipelineRaw = typeof r.pipelineType === "string" ? r.pipelineType.trim().toLowerCase() : "";
+    if (pipelineRaw) {
+      if (pipelineRaw.includes("battery")) pipelineType = "battery";
+      else if (pipelineRaw.includes("main")) pipelineType = "main";
+      else errors.push({ row: rowNum, name, error: `Pipeline "${r.pipelineType}" not recognized — defaulted to Main Pipeline` });
+    }
+
+    let expectedRevenue: string | null = null;
+    const revenueRaw = typeof r.expectedRevenue === "string" ? r.expectedRevenue.trim() : "";
+    if (revenueRaw) {
+      const parsed = parseFloat(revenueRaw.replace(/[^0-9.]/g, ""));
+      if (!isNaN(parsed)) expectedRevenue = String(parsed);
+      else errors.push({ row: rowNum, name, error: `Expected Target "${revenueRaw}" is not a valid number — left blank` });
+    }
+
     await db.insert(companiesTable).values({
       name,
-      city: typeof r.city === "string" && r.city.trim() ? r.city.trim() : null,
-      stage: "New Lead",
+      state: typeof r.state === "string" && r.state.trim() ? r.state.trim() : null,
+      pipelineType,
+      stage: firstStageByType.get(pipelineType) ?? "New Lead",
       priority: "medium",
+      expectedRevenue,
     });
     imported++;
   }
