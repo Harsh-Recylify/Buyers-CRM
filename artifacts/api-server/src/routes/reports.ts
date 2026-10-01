@@ -73,7 +73,7 @@ router.get("/reports/buyers", requireAuth, async (req, res): Promise<void> => {
   // bid whose company was later soft-deleted stops counting toward this
   // buyer's total — otherwise the amount only ever grows, never corrects.
   const rows = await db.execute(sql`
-    SELECT b.id, b.name, b.total_bids, b.won_bids,
+    SELECT b.id, b.name, b.company, b.total_bids, b.won_bids,
            COALESCE(SUM(CAST(bq.amount AS numeric)), 0) as total_amount
     FROM buyers b
     LEFT JOIN bid_quotes bq ON bq.buyer_id = b.id AND bq.status = 'accepted'
@@ -81,13 +81,13 @@ router.get("/reports/buyers", requireAuth, async (req, res): Promise<void> => {
         SELECT 1 FROM bids bd JOIN companies c ON c.id = bd.company_id
         WHERE bd.id = bq.bid_id AND c.deleted_at IS NULL
       )
-    GROUP BY b.id, b.name, b.total_bids, b.won_bids
+    GROUP BY b.id, b.name, b.company, b.total_bids, b.won_bids
     ORDER BY b.won_bids DESC
   `);
 
   res.json({
     buyers: (rows.rows as any[]).map(r => ({
-      id: Number(r.id), name: r.name,
+      id: Number(r.id), name: r.company || r.name,
       totalBids: Number(r.total_bids), wonBids: Number(r.won_bids),
       totalAmount: Number(r.total_amount),
       winRate: Number(r.total_bids) > 0 ? (Number(r.won_bids) / Number(r.total_bids)) * 100 : 0,
