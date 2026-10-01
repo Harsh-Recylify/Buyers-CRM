@@ -35,6 +35,13 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 30000,
+      // Keep data fresh across the CRM without anyone needing to click
+      // refresh: re-poll every 30s while the tab is focused, and re-sync
+      // immediately whenever the user switches back to the tab. Individual
+      // pages can still opt out (e.g. the Pipeline board disables
+      // refetchOnWindowFocus during drag interactions).
+      refetchInterval: 30000,
+      refetchOnWindowFocus: true,
     },
   },
 });

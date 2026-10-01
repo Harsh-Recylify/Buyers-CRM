@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useListNotifications, getListNotificationsQueryKey, useGlobalSearch, getGlobalSearchQueryKey } from "@workspace/api-client-react";
 import logo from "@assets/images_1782449948308.png";
@@ -20,7 +21,8 @@ import {
   Search,
   LogOut,
   Menu,
-  Loader2
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,6 +273,30 @@ function GlobalSearch() {
   );
 }
 
+function RefreshButton() {
+  const queryClient = useQueryClient();
+  const isFetching = useIsFetching();
+  const [spinning, setSpinning] = React.useState(false);
+
+  function handleRefresh() {
+    setSpinning(true);
+    queryClient.invalidateQueries();
+    window.setTimeout(() => setSpinning(false), 700);
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleRefresh}
+      title="Refresh"
+      aria-label="Refresh"
+    >
+      <RefreshCw className={`h-5 w-5 ${spinning || isFetching > 0 ? "animate-spin" : ""}`} />
+    </Button>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
@@ -306,6 +332,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="w-full flex-1">
             <GlobalSearch />
           </div>
+
+          <RefreshButton />
 
           <Button variant="ghost" size="icon" className="relative" asChild>
             <Link href="/notifications">
