@@ -7,6 +7,7 @@ export const pipelineBoardsTable = pgTable("pipeline_boards", {
   name: text("name").notNull(),
   color: text("color").notNull().default("#118847"),
   isDefault: boolean("is_default").notNull().default(false),
+  pipelineType: text("pipeline_type").notNull().default("main"), // main | battery — pairs with companies.pipelineType to scope which companies this board shows
   createdById: integer("created_by_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

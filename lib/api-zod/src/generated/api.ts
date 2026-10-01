@@ -257,6 +257,7 @@ export const ListCompaniesQueryParams = zod.object({
   "assignedTo": zod.coerce.number().optional(),
   "ownerId": zod.coerce.number().optional(),
   "status": zod.coerce.string().optional(),
+  "pipelineType": zod.coerce.string().optional(),
   "page": zod.coerce.number().optional(),
   "limit": zod.coerce.number().optional(),
   "sortBy": zod.coerce.string().optional(),
@@ -280,6 +281,7 @@ export const ListCompaniesResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -316,6 +318,7 @@ export const CreateCompanyBody = zod.object({
   "leadSource": zod.string().optional(),
   "ownerId": zod.number().optional(),
   "assignedManagerId": zod.number().optional(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string().optional(),
   "priority": zod.string().optional(),
   "expectedScrapWeight": zod.number().optional(),
@@ -340,6 +343,7 @@ export const CreateCompanyResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -391,6 +395,7 @@ export const GetCompanyResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -421,6 +426,7 @@ export const UpdateCompanyBody = zod.object({
   "leadSource": zod.string().optional(),
   "ownerId": zod.number().optional(),
   "assignedManagerId": zod.number().optional(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string().optional(),
   "priority": zod.string().optional(),
   "status": zod.string().optional(),
@@ -446,6 +452,7 @@ export const UpdateCompanyResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -490,6 +497,7 @@ export const UpdateCompanyStageResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -523,6 +531,7 @@ export const RestoreCompanyResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -709,6 +718,7 @@ export const GetPipelineResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),
@@ -731,6 +741,7 @@ export const ListPipelineBoardsResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "isDefault": zod.boolean(),
+  "pipelineType": zod.string(),
   "createdById": zod.number().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -740,7 +751,8 @@ export const ListPipelineBoardsResponse = zod.object({
 
 export const CreatePipelineBoardBody = zod.object({
   "name": zod.string(),
-  "color": zod.string().optional()
+  "color": zod.string().optional(),
+  "pipelineType": zod.string().optional()
 })
 
 export const CreatePipelineBoardResponse = zod.object({
@@ -748,6 +760,7 @@ export const CreatePipelineBoardResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "isDefault": zod.boolean(),
+  "pipelineType": zod.string(),
   "createdById": zod.number().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -760,7 +773,8 @@ export const UpdatePipelineBoardParams = zod.object({
 
 export const UpdatePipelineBoardBody = zod.object({
   "name": zod.string(),
-  "color": zod.string().optional()
+  "color": zod.string().optional(),
+  "pipelineType": zod.string().optional()
 })
 
 export const UpdatePipelineBoardResponse = zod.object({
@@ -768,6 +782,7 @@ export const UpdatePipelineBoardResponse = zod.object({
   "name": zod.string(),
   "color": zod.string(),
   "isDefault": zod.boolean(),
+  "pipelineType": zod.string(),
   "createdById": zod.number().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -2077,6 +2092,7 @@ export const GetDashboardRecentResponse = zod.object({
   "ownerName": zod.string().nullish(),
   "assignedManagerId": zod.number().nullish(),
   "assignedManagerName": zod.string().nullish(),
+  "pipelineType": zod.string().optional(),
   "stage": zod.string(),
   "priority": zod.string(),
   "status": zod.string(),

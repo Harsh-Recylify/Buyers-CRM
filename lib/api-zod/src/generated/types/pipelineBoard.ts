@@ -11,6 +11,7 @@ export interface PipelineBoard {
   name: string;
   color: string;
   isDefault: boolean;
+  pipelineType: string;
   /** @nullable */
   createdById?: number | null;
   createdAt: string;

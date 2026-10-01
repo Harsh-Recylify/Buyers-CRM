@@ -4,6 +4,8 @@ import {
   useListCompanies, getListCompaniesQueryKey,
   useCreateCompany, useUpdateCompany, useDeleteCompany,
   useListUsers, getListUsersQueryKey,
+  useListPipelineBoards, getListPipelineBoardsQueryKey,
+  useListPipelineStages, getListPipelineStagesQueryKey,
   getGetPipelineQueryKey,
   useImportCompanies, type CompanyImportResult,
 } from "@workspace/api-client-react";
@@ -74,10 +76,9 @@ function downloadTemplate() {
   XLSX.writeFile(wb, "company-import-template.xlsx");
 }
 
-const PIPELINE_STAGES = [
-  "New Lead", "Contacted", "Meeting Scheduled", "Site Inspection",
-  "Quotation Sent", "Bid Open", "Negotiation", "Approved",
-  "Pickup Scheduled", "Material Collected", "Completed", "Won", "Lost",
+const PIPELINE_TYPES = [
+  { value: "main", label: "Main Pipeline" },
+  { value: "battery", label: "Battery Pipeline" },
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -91,6 +92,7 @@ const INDIAN_STATES = [
 type CompanyFormData = {
   name: string;
   state: string;
+  pipelineType: string;
   stage: string;
   priority: string;
   expectedScrapWeight: string;
@@ -99,10 +101,11 @@ type CompanyFormData = {
   notes: string;
 };
 
-const emptyForm = (): CompanyFormData => ({
+const emptyForm = (defaultStage: string): CompanyFormData => ({
   name: "",
   state: "",
-  stage: "New Lead", priority: "medium",
+  pipelineType: "main",
+  stage: defaultStage, priority: "medium",
   expectedScrapWeight: "", expectedRevenue: "", expectedPickupDate: "", notes: "",
 });
 
@@ -113,12 +116,36 @@ export default function Companies() {
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [deletingId, setDeletingId] = React.useState<number | null>(null);
-  const [form, setForm] = React.useState<CompanyFormData>(emptyForm());
+  const [form, setForm] = React.useState<CompanyFormData>(emptyForm(""));
   const [page, setPage] = React.useState(1);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [stageFilter, setStageFilter] = React.useState<string>("");
   const [priorityFilter, setPriorityFilter] = React.useState<string>("");
   const [ownerFilter, setOwnerFilter] = React.useState<string>("");
+  const [pipelineTypeFilter, setPipelineTypeFilter] = React.useState<string>("");
+
+  // Pipeline stages are configured centrally (Pipeline page); both boards
+  // share the same stage names, so the main board's list is the canonical
+  // source for stage dropdowns/filters/colors here.
+  const { data: boardsData } = useListPipelineBoards({ query: { queryKey: getListPipelineBoardsQueryKey() } });
+  const mainBoard = boardsData?.data.find((b) => b.isDefault) ?? boardsData?.data[0];
+  const { data: stagesData } = useListPipelineStages(mainBoard?.id ?? 0, {
+    query: { enabled: !!mainBoard, queryKey: getListPipelineStagesQueryKey(mainBoard?.id ?? 0) },
+  });
+  const pipelineStages = stagesData?.data ?? [];
+  const stageColorMap = new Map(pipelineStages.map((s) => [s.name, s.color]));
+
+  // Stages load asynchronously; if the Add Company modal is opened before
+  // they arrive, the form starts with no stage selected. Backfill it once
+  // the list shows up rather than letting the company get created with a
+  // blank stage.
+  React.useEffect(() => {
+    if (showModal && !editingId && !form.stage && pipelineStages.length > 0) {
+      setForm((f) => ({ ...f, stage: pipelineStages[0].name }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipelineStages.length, showModal]);
+
   const [showImport, setShowImport] = React.useState(false);
   const [importRows, setImportRows] = React.useState<ImportRow[]>([]);
   const [importFileName, setImportFileName] = React.useState("");
@@ -126,7 +153,7 @@ export default function Companies() {
   const [importParseError, setImportParseError] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const activeFilterCount = [stageFilter, priorityFilter, ownerFilter].filter(Boolean).length;
+  const activeFilterCount = [stageFilter, priorityFilter, ownerFilter, pipelineTypeFilter].filter(Boolean).length;
 
   const listParams = {
     search,
@@ -135,6 +162,7 @@ export default function Companies() {
     ...(stageFilter && { stage: stageFilter }),
     ...(priorityFilter && { priority: priorityFilter }),
     ...(ownerFilter && { ownerId: parseInt(ownerFilter) }),
+    ...(pipelineTypeFilter && { pipelineType: pipelineTypeFilter }),
   };
 
   const { data, isLoading } = useListCompanies(
@@ -146,6 +174,7 @@ export default function Companies() {
     setStageFilter("");
     setPriorityFilter("");
     setOwnerFilter("");
+    setPipelineTypeFilter("");
     setPage(1);
   };
 
@@ -190,10 +219,12 @@ export default function Companies() {
     },
   });
 
+  const defaultStageName = pipelineStages[0]?.name ?? "";
+
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setForm(emptyForm());
+    setForm(emptyForm(defaultStageName));
   };
 
   const importCompanies = useImportCompanies({
@@ -247,7 +278,8 @@ export default function Companies() {
     setForm({
       name: company.name || "",
       state: company.state || "",
-      stage: company.stage || "New Lead",
+      pipelineType: company.pipelineType || "main",
+      stage: company.stage || defaultStageName,
       priority: company.priority || "medium",
       expectedScrapWeight: company.expectedScrapWeight ? String(company.expectedScrapWeight) : "",
       expectedRevenue: company.expectedRevenue ? String(company.expectedRevenue) : "",
@@ -263,9 +295,14 @@ export default function Companies() {
       toast({ title: "Company name is required", variant: "destructive" });
       return;
     }
+    if (!form.stage) {
+      toast({ title: "Please select a pipeline stage", variant: "destructive" });
+      return;
+    }
     const payload = {
       name: form.name.trim(),
       ...(form.state && { state: form.state }),
+      pipelineType: form.pipelineType,
       stage: form.stage,
       priority: form.priority,
       ...(form.expectedScrapWeight && { expectedScrapWeight: parseFloat(form.expectedScrapWeight) }),
@@ -293,11 +330,9 @@ export default function Companies() {
     }
   };
 
-  const getStageColor = (stage: string) => {
-    if (stage?.includes("Won") || stage?.includes("Completed")) return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    if (stage?.includes("Lost")) return "bg-gray-100 text-gray-600 border-gray-200";
-    if (stage?.includes("Negotiation") || stage?.includes("Bid Open")) return "bg-blue-100 text-blue-800 border-blue-200";
-    return "bg-purple-100 text-purple-800 border-purple-200";
+  const getStageBadgeStyle = (stage: string): React.CSSProperties => {
+    const color = stageColorMap.get(stage) ?? "#6b7280";
+    return { color, borderColor: `${color}40`, background: `${color}14` };
   };
 
   const isPending = createCompany.isPending || updateCompany.isPending;
@@ -314,7 +349,7 @@ export default function Companies() {
             <Upload className="h-4 w-4" />
             Import
           </Button>
-          <Button className="gap-2" onClick={() => { setEditingId(null); setForm(emptyForm()); setShowModal(true); }}>
+          <Button className="gap-2" onClick={() => { setEditingId(null); setForm(emptyForm(defaultStageName)); setShowModal(true); }}>
             <Plus className="h-4 w-4" />
             Add Company
           </Button>
@@ -358,6 +393,20 @@ export default function Companies() {
                   </div>
 
                   <div className="space-y-1.5">
+                    <Label>Pipeline</Label>
+                    <Select
+                      value={pipelineTypeFilter || "all"}
+                      onValueChange={(v) => { setPipelineTypeFilter(v === "all" ? "" : v); setPage(1); }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="All pipelines" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All pipelines</SelectItem>
+                        {PIPELINE_TYPES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
                     <Label>Pipeline Stage</Label>
                     <Select
                       value={stageFilter || "all"}
@@ -366,7 +415,7 @@ export default function Companies() {
                       <SelectTrigger><SelectValue placeholder="All stages" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All stages</SelectItem>
-                        {PIPELINE_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {pipelineStages.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -452,9 +501,14 @@ export default function Companies() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`font-medium ${getStageColor(company.stage)}`}>
-                        {company.stage}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className="font-medium" style={getStageBadgeStyle(company.stage)}>
+                          {company.stage}
+                        </Badge>
+                        {company.pipelineType === "battery" && (
+                          <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-200 bg-amber-50">Battery</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className={`${getPriorityColor(company.priority)} border-transparent`}>
@@ -540,11 +594,28 @@ export default function Companies() {
               </div>
 
               <div className="space-y-1.5">
+                <Label>Pipeline</Label>
+                <Select value={form.pipelineType} onValueChange={set("pipelineType")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PIPELINE_TYPES.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label>Pipeline Stage</Label>
                 <Select value={form.stage} onValueChange={set("stage")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {PIPELINE_STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {pipelineStages.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full inline-block" style={{ background: s.color }} />
+                          {s.name}
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

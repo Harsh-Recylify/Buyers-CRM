@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { db, companiesTable, bidsTable, buyersTable, usersTable, activitiesTable, tasksTable } from "@workspace/db";
-import { eq, count, sql, gte, and, isNull, desc } from "drizzle-orm";
+import { db, companiesTable, bidsTable, buyersTable, usersTable, activitiesTable, tasksTable, pipelineStagesTable } from "@workspace/db";
+import { eq, count, sql, gte, and, isNull, desc, asc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
+import { ensureDefaultBoard } from "./pipeline-boards";
 
 const router = Router();
 
@@ -17,7 +18,11 @@ function getPeriodStart(period?: string): Date {
 }
 
 router.get("/reports/pipeline", requireAuth, async (req, res): Promise<void> => {
-  const stages = ["New Lead","Contacted","Meeting Scheduled","Site Inspection","Quotation Sent","Bid Open","Negotiation","Approved","Pickup Scheduled","Material Collected","Completed","Won","Lost"];
+  const defaultBoard = await ensureDefaultBoard();
+  const stageRows = await db.select().from(pipelineStagesTable)
+    .where(eq(pipelineStagesTable.boardId, defaultBoard.id))
+    .orderBy(asc(pipelineStagesTable.position));
+  const stages = stageRows.map(s => s.name);
 
   const rows = await db.execute(sql`
     SELECT stage, COUNT(*) as count, COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) as value
@@ -26,7 +31,7 @@ router.get("/reports/pipeline", requireAuth, async (req, res): Promise<void> => 
   const stageMap = new Map((rows.rows as any[]).map(r => [r.stage, r]));
   const totalCompanies = (rows.rows as any[]).reduce((s, r) => s + Number(r.count), 0);
   const totalValue = (rows.rows as any[]).reduce((s, r) => s + Number(r.value), 0);
-  const wonCount = Number(stageMap.get("Won")?.count ?? 0);
+  const wonCount = Number(stageMap.get("Vendor Closed")?.count ?? 0);
 
   const stageBreakdown = stages.map(stage => {
     const r = stageMap.get(stage);

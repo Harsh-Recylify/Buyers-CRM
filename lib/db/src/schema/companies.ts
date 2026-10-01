@@ -16,6 +16,7 @@ export const companiesTable = pgTable("companies", {
   leadSource: text("lead_source"),
   ownerId: integer("owner_id"),
   assignedManagerId: integer("assigned_manager_id"),
+  pipelineType: text("pipeline_type").notNull().default("main"), // main | battery — which pipeline board this company tracks through
   stage: text("stage").notNull().default("New Lead"),
   priority: text("priority").notNull().default("medium"), // high | medium | low
   status: text("status").notNull().default("active"), // active | archived | deleted

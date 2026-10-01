@@ -292,6 +292,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: pipelineType
+          in: query
+          schema:
+            type: string
         - name: page
           in: query
           schema:
@@ -2281,6 +2285,8 @@ components:
           type: ["integer", "null"]
         assignedManagerName:
           type: ["string", "null"]
+        pipelineType:
+          type: string
         stage:
           type: string
         priority:
@@ -2342,6 +2348,8 @@ components:
           type: integer
         assignedManagerId:
           type: integer
+        pipelineType:
+          type: string
         stage:
           type: string
         priority:
@@ -2382,6 +2390,8 @@ components:
           type: integer
         assignedManagerId:
           type: integer
+        pipelineType:
+          type: string
         stage:
           type: string
         priority:
@@ -2448,7 +2458,7 @@ components:
     # ── PIPELINE ────────────────────────────────────────────────────────────────
     PipelineBoard:
       type: object
-      required: [id, name, color, isDefault, createdAt, updatedAt]
+      required: [id, name, color, isDefault, pipelineType, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -2458,6 +2468,8 @@ components:
           type: string
         isDefault:
           type: boolean
+        pipelineType:
+          type: string
         createdById:
           type: ["integer", "null"]
         createdAt:
@@ -2472,6 +2484,8 @@ components:
         name:
           type: string
         color:
+          type: string
+        pipelineType:
           type: string
 
     PipelineBoardListResponse:

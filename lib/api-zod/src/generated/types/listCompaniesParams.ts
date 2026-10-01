@@ -13,6 +13,7 @@ priority?: string;
 assignedTo?: number;
 ownerId?: number;
 status?: string;
+pipelineType?: string;
 page?: number;
 limit?: number;
 sortBy?: string;

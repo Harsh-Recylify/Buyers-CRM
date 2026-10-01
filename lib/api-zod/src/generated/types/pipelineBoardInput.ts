@@ -9,4 +9,5 @@
 export interface PipelineBoardInput {
   name: string;
   color?: string;
+  pipelineType?: string;
 }

@@ -35,6 +35,7 @@ export interface Company {
   assignedManagerId?: number | null;
   /** @nullable */
   assignedManagerName?: string | null;
+  pipelineType?: string;
   stage: string;
   priority: string;
   status: string;

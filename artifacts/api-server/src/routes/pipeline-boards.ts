@@ -5,30 +5,27 @@ import { requireAuth } from "../lib/auth";
 
 const router = Router();
 
-const DEFAULT_STAGES = [
-  { name: "New Lead", color: "#3b82f6", position: 0 },
-  { name: "Contacted", color: "#8b5cf6", position: 1 },
-  { name: "Meeting Scheduled", color: "#f59e0b", position: 2 },
-  { name: "Site Inspection", color: "#14b8a6", position: 3 },
-  { name: "Quotation Sent", color: "#6366f1", position: 4 },
-  { name: "Bid Open", color: "#ec4899", position: 5 },
-  { name: "Negotiation", color: "#0ea5e9", position: 6 },
-  { name: "Approved", color: "#22c55e", position: 7 },
-  { name: "Pickup Scheduled", color: "#f97316", position: 8 },
-  { name: "Material Collected", color: "#a855f7", position: 9 },
-  { name: "Completed", color: "#10b981", position: 10 },
-  { name: "Won", color: "#16a34a", position: 11 },
-  { name: "Lost", color: "#6b7280", position: 12 },
+export const DEFAULT_STAGES = [
+  { name: "Quote Pending", color: "#3b82f6", position: 0 },
+  { name: "Quote Submitted", color: "#6366f1", position: 1 },
+  { name: "Invoice", color: "#f59e0b", position: 2 },
+  { name: "Vendor Closed", color: "#16a34a", position: 3 },
+  { name: "Quote Lost", color: "#6b7280", position: 4 },
+  { name: "Park", color: "#a855f7", position: 5 },
+  { name: "Inspection", color: "#14b8a6", position: 6 },
+  { name: "Revised Quote", color: "#ec4899", position: 7 },
+  { name: "Invoice Pending", color: "#f97316", position: 8 },
 ];
 
 async function ensureDefaultBoard() {
-  const existing = await db.select().from(pipelineBoardsTable).limit(1);
+  const existing = await db.select().from(pipelineBoardsTable).where(eq(pipelineBoardsTable.isDefault, true)).limit(1);
   if (existing.length > 0) return existing[0]!;
 
   const [board] = await db.insert(pipelineBoardsTable).values({
     name: "Main Pipeline",
     color: "#118847",
     isDefault: true,
+    pipelineType: "main",
   }).returning();
 
   await db.insert(pipelineStagesTable).values(
@@ -41,6 +38,7 @@ async function ensureDefaultBoard() {
 function formatBoard(b: typeof pipelineBoardsTable.$inferSelect) {
   return {
     id: b.id, name: b.name, color: b.color, isDefault: b.isDefault,
+    pipelineType: b.pipelineType,
     createdById: b.createdById,
     createdAt: b.createdAt.toISOString(), updatedAt: b.updatedAt.toISOString(),
   };
@@ -63,11 +61,11 @@ router.get("/pipeline/boards", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/pipeline/boards", requireAuth, async (req, res): Promise<void> => {
-  const { name, color } = req.body;
+  const { name, color, pipelineType } = req.body;
   if (!name) { res.status(400).json({ error: "name is required" }); return; }
   const userId = (req as any).user?.id ?? null;
   const [board] = await db.insert(pipelineBoardsTable).values({
-    name, color: color ?? "#118847", isDefault: false, createdById: userId,
+    name, color: color ?? "#118847", isDefault: false, pipelineType: pipelineType ?? "main", createdById: userId,
   }).returning();
   res.status(201).json(formatBoard(board!));
 });
@@ -75,10 +73,11 @@ router.post("/pipeline/boards", requireAuth, async (req, res): Promise<void> => 
 router.patch("/pipeline/boards/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(req.params["id"] as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const { name, color } = req.body;
+  const { name, color, pipelineType } = req.body;
   const updates: Record<string, any> = {};
   if (name !== undefined) updates.name = name;
   if (color !== undefined) updates.color = color;
+  if (pipelineType !== undefined) updates.pipelineType = pipelineType;
   const [board] = await db.update(pipelineBoardsTable).set(updates).where(eq(pipelineBoardsTable.id, id)).returning();
   if (!board) { res.status(404).json({ error: "Board not found" }); return; }
   res.json(formatBoard(board));

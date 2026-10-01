@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, companiesTable, usersTable, pipelineStagesTable } from "@workspace/db";
-import { isNull, eq, asc } from "drizzle-orm";
+import { db, companiesTable, usersTable, pipelineStagesTable, pipelineBoardsTable } from "@workspace/db";
+import { isNull, eq, asc, and } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { ensureDefaultBoard } from "./pipeline-boards";
 
@@ -12,13 +12,18 @@ router.get("/pipeline", requireAuth, async (req, res): Promise<void> => {
   const defaultBoard = await ensureDefaultBoard();
   const boardId = q.boardId ? parseInt(q.boardId, 10) : defaultBoard.id;
 
+  const [board] = await db.select().from(pipelineBoardsTable).where(eq(pipelineBoardsTable.id, boardId));
+  if (!board) { res.status(404).json({ error: "Board not found" }); return; }
+
   const stages = await db.select().from(pipelineStagesTable)
     .where(eq(pipelineStagesTable.boardId, boardId))
     .orderBy(asc(pipelineStagesTable.position));
 
-  const stageNames = stages.map(s => s.name);
-
-  const companies = await db.select().from(companiesTable).where(isNull(companiesTable.deletedAt));
+  // Companies are scoped to this board's pipelineType (main/battery) — without
+  // this, two boards sharing the same stage names would show identical
+  // companies, defeating the point of having separate pipelines.
+  const companies = await db.select().from(companiesTable)
+    .where(and(isNull(companiesTable.deletedAt), eq(companiesTable.pipelineType, board.pipelineType)));
 
   const userIds = [...new Set(companies.flatMap(c => [c.ownerId, c.assignedManagerId].filter(Boolean) as number[]))];
   const users = userIds.length
@@ -43,7 +48,7 @@ router.get("/pipeline", requireAuth, async (req, res): Promise<void> => {
         ownerName: c.ownerId ? userMap.get(c.ownerId) ?? null : null,
         assignedManagerId: c.assignedManagerId,
         assignedManagerName: c.assignedManagerId ? userMap.get(c.assignedManagerId) ?? null : null,
-        stage: c.stage, priority: c.priority, status: c.status,
+        pipelineType: c.pipelineType, stage: c.stage, priority: c.priority, status: c.status,
         expectedScrapWeight: c.expectedScrapWeight ? Number(c.expectedScrapWeight) : null,
         expectedRevenue: c.expectedRevenue ? Number(c.expectedRevenue) : null,
         expectedPickupDate: c.expectedPickupDate, notes: c.notes,

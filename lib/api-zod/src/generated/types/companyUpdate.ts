@@ -19,6 +19,7 @@ export interface CompanyUpdate {
   leadSource?: string;
   ownerId?: number;
   assignedManagerId?: number;
+  pipelineType?: string;
   stage?: string;
   priority?: string;
   status?: string;

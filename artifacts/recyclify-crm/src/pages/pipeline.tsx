@@ -2,13 +2,14 @@ import React from "react";
 import {
   useGetPipeline, getGetPipelineQueryKey, getListCompaniesQueryKey,
   useUpdateCompanyStage, useUpdateCompany,
-  useListPipelineBoards, useCreatePipelineBoard, useUpdatePipelineBoard, useDeletePipelineBoard,
-  useListPipelineStages, useCreatePipelineStage, useUpdatePipelineStage, useDeletePipelineStage,
+  useListPipelineBoards, useCreatePipelineBoard,
+  useListPipelineStages, useUpdatePipelineStage,
   getListPipelineBoardsQueryKey, getListPipelineStagesQueryKey,
-  type PipelineStage, type PipelineBoard,
+  type PipelineStage,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDroppable, useDraggable } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDroppable, useDraggable, closestCenter, type CollisionDetection } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,24 +20,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import {
-  Settings2, Plus, Pencil, Trash2, ChevronUp, ChevronDown,
-  Check, X, Building2, ExternalLink, GripVertical,
-} from "lucide-react";
+import { Plus, Pencil, Building2, ExternalLink, GripVertical, LayoutGrid } from "lucide-react";
 
 const BOARD_COLORS = [
   "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444",
   "#14b8a6", "#22c55e", "#6366f1", "#ec4899",
   "#f97316", "#06b6d4", "#a855f7", "#118847",
-];
-
-const STAGE_COLORS = [
-  "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444",
-  "#6b7280", "#14b8a6", "#22c55e", "#6366f1",
-  "#ec4899", "#f97316", "#06b6d4", "#a855f7",
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -176,183 +167,6 @@ function CompanyEditModal({
   );
 }
 
-// ─── Manage Stages Sheet ─────────────────────────────────────────────────────
-function ManageStagesSheet({
-  open,
-  onOpenChange,
-  boardId,
-  stages,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  boardId: number;
-  stages: PipelineStage[];
-}) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const stagesKey = getListPipelineStagesQueryKey(boardId);
-
-  const createStage = useCreatePipelineStage();
-  const updateStage = useUpdatePipelineStage();
-  const deleteStage = useDeletePipelineStage();
-
-  const [newName, setNewName] = React.useState("");
-  const [newColor, setNewColor] = React.useState("#3b82f6");
-  const [editingId, setEditingId] = React.useState<number | null>(null);
-  const [editName, setEditName] = React.useState("");
-  const [editColor, setEditColor] = React.useState("");
-
-  function invalidate() {
-    queryClient.invalidateQueries({ queryKey: stagesKey });
-    queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey() });
-  }
-
-  function handleAdd() {
-    if (!newName.trim()) return;
-    createStage.mutate(
-      { boardId, data: { name: newName.trim(), color: newColor } },
-      {
-        onSuccess: () => { setNewName(""); setNewColor("#3b82f6"); invalidate(); toast({ title: "Stage added" }); },
-        onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
-      }
-    );
-  }
-
-  function startEdit(stage: PipelineStage) {
-    setEditingId(stage.id);
-    setEditName(stage.name);
-    setEditColor(stage.color);
-  }
-
-  function saveEdit() {
-    if (!editingId || !editName.trim()) return;
-    updateStage.mutate(
-      { id: editingId, data: { name: editName.trim(), color: editColor } },
-      {
-        onSuccess: () => { setEditingId(null); invalidate(); },
-        onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
-      }
-    );
-  }
-
-  function moveStage(stage: PipelineStage, dir: "up" | "down") {
-    const sorted = [...stages].sort((a, b) => a.position - b.position);
-    const idx = sorted.findIndex(s => s.id === stage.id);
-    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-    const other = sorted[swapIdx]!;
-    Promise.all([
-      updateStage.mutateAsync({ id: stage.id, data: { name: stage.name, position: other.position } }),
-      updateStage.mutateAsync({ id: other.id, data: { name: other.name, position: stage.position } }),
-    ]).then(() => invalidate()).catch(() => {});
-  }
-
-  function handleDelete(stage: PipelineStage) {
-    if (!confirm(`Delete stage "${stage.name}"?`)) return;
-    deleteStage.mutate({ id: stage.id }, {
-      onSuccess: () => { invalidate(); toast({ title: "Stage deleted" }); },
-      onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
-    });
-  }
-
-  const sorted = [...stages].sort((a, b) => a.position - b.position);
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-80 sm:w-96 p-0 flex flex-col">
-        <SheetHeader className="px-5 py-4 border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4" /> Manage Stages
-          </SheetTitle>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {sorted.map((stage, idx) => (
-            <div key={stage.id} className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2.5 group">
-              <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-
-              {editingId === stage.id ? (
-                <>
-                  <input
-                    type="color"
-                    value={editColor}
-                    onChange={e => setEditColor(e.target.value)}
-                    className="h-6 w-6 rounded cursor-pointer border-0 p-0 shrink-0"
-                  />
-                  <Input
-                    className="h-7 text-sm flex-1"
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditingId(null); }}
-                    autoFocus
-                  />
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-green-600 hover:text-green-700" onClick={saveEdit}>
-                    <Check className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500" onClick={() => setEditingId(null)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <span className="h-3 w-3 rounded-full shrink-0" style={{ background: stage.color }} />
-                  <span className="flex-1 text-sm font-medium truncate">{stage.name}</span>
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveStage(stage, "up")} disabled={idx === 0}>
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => moveStage(stage, "down")} disabled={idx === sorted.length - 1}>
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startEdit(stage)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:text-red-600" onClick={() => handleDelete(stage)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-          {sorted.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">No stages yet. Add your first stage below.</p>
-          )}
-        </div>
-
-        {/* Add new stage */}
-        <div className="border-t p-4 space-y-3 bg-gray-50/50">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Add Stage</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={newColor}
-              onChange={e => setNewColor(e.target.value)}
-              className="h-8 w-8 rounded cursor-pointer border border-gray-200 p-0 shrink-0"
-              title="Pick stage color"
-            />
-            <Input
-              className="flex-1"
-              placeholder="Stage name..."
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
-            />
-          </div>
-          <Button
-            className="w-full bg-[#118847] hover:bg-[#0e7038] gap-1"
-            onClick={handleAdd}
-            disabled={!newName.trim() || createStage.isPending}
-          >
-            <Plus className="h-4 w-4" />
-            {createStage.isPending ? "Adding..." : "Add Stage"}
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 // ─── New Board Dialog ────────────────────────────────────────────────────────
 function NewBoardDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { toast } = useToast();
@@ -435,7 +249,7 @@ function DraggableCard({
   const [, navigate] = useLocation();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: String(company.id),
-    data: { stage, company },
+    data: { type: "card", stage, company },
   });
 
   const style: React.CSSProperties = {
@@ -510,8 +324,9 @@ function DraggableCard({
   );
 }
 
-// ─── Droppable Column ────────────────────────────────────────────────────────
-function DroppableColumn({
+// ─── Sortable + Droppable Column ─────────────────────────────────────────────
+function SortableColumn({
+  stageId,
   stage,
   stageColor,
   count,
@@ -519,6 +334,7 @@ function DroppableColumn({
   companies,
   onEditClick,
 }: {
+  stageId: number;
   stage: string;
   stageColor: string;
   count: number;
@@ -526,41 +342,64 @@ function DroppableColumn({
   companies: any[];
   onEditClick: (company: any) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const { attributes, listeners, setNodeRef: setSortableRef, transform, transition, isDragging } = useSortable({
+    id: `col-${stageId}`,
+    data: { type: "column" },
+  });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: stage,
+    data: { type: "stage-dropzone" },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`w-72 flex-shrink-0 flex flex-col rounded-xl border transition-colors ${
-        isOver ? "bg-primary/5 border-primary/30" : "bg-gray-50/70 border-gray-200"
-      }`}
-      style={{ minHeight: 200 }}
-    >
-      <div className="p-3 border-b flex items-center justify-between bg-white/80 rounded-t-xl sticky top-0 z-10 gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: stageColor }} />
-          <h3 className="font-semibold text-sm text-gray-800 truncate">{stage}</h3>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {totalRevenue > 0 && (
-            <span className="text-[10px] text-[#118847] font-medium">
-              ₹{totalRevenue >= 100000 ? `${(totalRevenue / 100000).toFixed(1)}L` : totalRevenue.toLocaleString("en-IN")}
-            </span>
-          )}
-          <Badge variant="secondary" className="text-xs">{count}</Badge>
-        </div>
-      </div>
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[80px]">
-        {companies.map((company) => (
-          <DraggableCard key={company.id} company={company} stage={stage} onEditClick={onEditClick} />
-        ))}
-        {companies.length === 0 && (
-          <div className={`text-center py-8 text-xs text-muted-foreground italic rounded-lg border-2 border-dashed transition-colors ${
-            isOver ? "border-primary/40 text-primary" : "border-gray-200"
-          }`}>
-            {isOver ? "Drop here" : "No companies"}
+    <div ref={setSortableRef} style={style} className="w-72 flex-shrink-0">
+      <div
+        ref={setDroppableRef}
+        className={`flex flex-col rounded-xl border transition-colors ${
+          isOver ? "bg-primary/5 border-primary/30" : "bg-gray-50/70 border-gray-200"
+        }`}
+        style={{ minHeight: 200 }}
+      >
+        <div className="p-3 border-b flex items-center justify-between bg-white/80 rounded-t-xl sticky top-0 z-10 gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 touch-none shrink-0"
+              title="Drag to reorder this stage"
+            >
+              <GripVertical className="h-4 w-4" />
+            </div>
+            <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: stageColor }} />
+            <h3 className="font-semibold text-sm text-gray-800 truncate">{stage}</h3>
           </div>
-        )}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {totalRevenue > 0 && (
+              <span className="text-[10px] text-[#118847] font-medium">
+                ₹{totalRevenue >= 100000 ? `${(totalRevenue / 100000).toFixed(1)}L` : totalRevenue.toLocaleString("en-IN")}
+              </span>
+            )}
+            <Badge variant="secondary" className="text-xs">{count}</Badge>
+          </div>
+        </div>
+        <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[80px]">
+          {companies.map((company) => (
+            <DraggableCard key={company.id} company={company} stage={stage} onEditClick={onEditClick} />
+          ))}
+          {companies.length === 0 && (
+            <div className={`text-center py-8 text-xs text-muted-foreground italic rounded-lg border-2 border-dashed transition-colors ${
+              isOver ? "border-primary/40 text-primary" : "border-gray-200"
+            }`}>
+              {isOver ? "Drop here" : "No companies"}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -573,8 +412,8 @@ export default function Pipeline() {
 
   const [selectedBoardId, setSelectedBoardId] = React.useState<number | null>(null);
   const [activeCompany, setActiveCompany] = React.useState<any>(null);
+  const [activeColumn, setActiveColumn] = React.useState<any>(null);
   const [editCompany, setEditCompany] = React.useState<any>(null);
-  const [manageStagesOpen, setManageStagesOpen] = React.useState(false);
   const [newBoardOpen, setNewBoardOpen] = React.useState(false);
 
   // Boards
@@ -592,10 +431,11 @@ export default function Pipeline() {
   }, [boards, selectedBoardId]);
 
   // Stages for selected board
+  const stagesKey = getListPipelineStagesQueryKey(selectedBoardId ?? 0);
   const { data: stagesData } = useListPipelineStages(selectedBoardId ?? 0, {
     query: {
       enabled: selectedBoardId !== null,
-      queryKey: getListPipelineStagesQueryKey(selectedBoardId ?? 0),
+      queryKey: stagesKey,
     },
   });
   const stages = stagesData?.data ?? [];
@@ -620,14 +460,56 @@ export default function Pipeline() {
     },
   });
 
+  const updateStagePosition = useUpdatePipelineStage();
+
+  // The column's sortable wrapper spans the whole column (so it can animate
+  // as one piece while being reordered), which fully overlaps the card
+  // drop-zone inside it. Without this, dnd-kit's default collision detection
+  // can resolve a card drag onto the "column" target instead of the
+  // "stage-dropzone" target (or vice versa for a column drag), silently
+  // no-opping the drop. Restricting candidates by the active item's own type
+  // removes the ambiguity regardless of DOM nesting.
+  const collisionDetectionStrategy: CollisionDetection = (args) => {
+    const activeType = args.active.data.current?.type;
+    const wantType = activeType === "column" ? "column" : "stage-dropzone";
+    const filtered = args.droppableContainers.filter((c) => c.data.current?.type === wantType);
+    return closestCenter({ ...args, droppableContainers: filtered });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveCompany(event.active.data.current?.company ?? null);
+    if (event.active.data.current?.type === "column") {
+      const stageId = parseInt(String(event.active.id).replace("col-", ""), 10);
+      setActiveColumn(data?.columns.find(c => c.stageId === stageId) ?? null);
+    } else {
+      setActiveCompany(event.active.data.current?.company ?? null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveCompany(null);
     const { active, over } = event;
-    if (!over) return;
+    setActiveCompany(null);
+    setActiveColumn(null);
+
+    if (active.data.current?.type === "column") {
+      if (!over || over.data.current?.type !== "column" || active.id === over.id || !data) return;
+      const oldIndex = data.columns.findIndex(c => `col-${c.stageId}` === String(active.id));
+      const newIndex = data.columns.findIndex(c => `col-${c.stageId}` === String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return;
+      const reordered = arrayMove(data.columns, oldIndex, newIndex);
+      Promise.all(
+        reordered.map((col, idx) =>
+          col.stagePosition !== idx
+            ? updateStagePosition.mutateAsync({ id: col.stageId!, data: { name: col.stage, position: idx } })
+            : Promise.resolve()
+        )
+      ).then(() => {
+        queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey(pipelineParams) });
+        queryClient.invalidateQueries({ queryKey: stagesKey });
+      }).catch((e: any) => toast({ title: "Failed to reorder stages", description: e.message, variant: "destructive" }));
+      return;
+    }
+
+    if (!over || over.data.current?.type !== "stage-dropzone") return;
     const companyId = parseInt(String(active.id), 10);
     const fromStage = active.data.current?.stage as string;
     const toStage = String(over.id);
@@ -636,7 +518,6 @@ export default function Pipeline() {
   };
 
   const totalCompanies = data?.columns.reduce((acc, col) => acc + col.count, 0) ?? 0;
-  const selectedBoard = boards.find(b => b.id === selectedBoardId);
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -645,19 +526,10 @@ export default function Pipeline() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Pipeline</h1>
           <p className="text-muted-foreground mt-0.5 text-sm">
-            {totalCompanies} {totalCompanies === 1 ? "company" : "companies"} · Drag cards to move between stages
+            {totalCompanies} {totalCompanies === 1 ? "company" : "companies"} · Drag cards to move between stages · Drag a stage's handle to reorder stages
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setManageStagesOpen(true)}
-            disabled={!selectedBoardId}
-          >
-            <Settings2 className="h-4 w-4" /> Manage Stages
-          </Button>
           <Button
             size="sm"
             className="bg-[#118847] hover:bg-[#0e7038] gap-1.5"
@@ -711,28 +583,30 @@ export default function Pipeline() {
           </div>
         ) : data?.columns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Settings2 className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <p className="text-lg font-medium text-muted-foreground">No stages yet</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Click "Manage Stages" to add pipeline stages</p>
-            <Button className="mt-4 bg-[#118847] hover:bg-[#0e7038] gap-1" onClick={() => setManageStagesOpen(true)}>
-              <Settings2 className="h-4 w-4" /> Manage Stages
-            </Button>
+            <LayoutGrid className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <p className="text-lg font-medium text-muted-foreground">No stages on this board</p>
           </div>
         ) : (
-          <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="flex gap-4 min-w-max h-full items-start">
-              {data?.columns.map((column) => (
-                <DroppableColumn
-                  key={column.stage}
-                  stage={column.stage}
-                  stageColor={column.stageColor ?? "#6b7280"}
-                  count={column.count}
-                  totalRevenue={column.totalRevenue}
-                  companies={column.companies}
-                  onEditClick={setEditCompany}
-                />
-              ))}
-            </div>
+          <DndContext collisionDetection={collisionDetectionStrategy} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <SortableContext
+              items={(data?.columns ?? []).map(c => `col-${c.stageId}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              <div className="flex gap-4 min-w-max h-full items-start">
+                {data?.columns.map((column) => (
+                  <SortableColumn
+                    key={column.stageId}
+                    stageId={column.stageId!}
+                    stage={column.stage}
+                    stageColor={column.stageColor ?? "#6b7280"}
+                    count={column.count}
+                    totalRevenue={column.totalRevenue}
+                    companies={column.companies}
+                    onEditClick={setEditCompany}
+                  />
+                ))}
+              </div>
+            </SortableContext>
 
             <DragOverlay>
               {activeCompany ? (
@@ -750,6 +624,12 @@ export default function Pipeline() {
                     </div>
                   </CardContent>
                 </Card>
+              ) : activeColumn ? (
+                <div className="w-72 rounded-xl border bg-white shadow-xl opacity-95 p-3 flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: activeColumn.stageColor ?? "#6b7280" }} />
+                  <h3 className="font-semibold text-sm text-gray-800 truncate">{activeColumn.stage}</h3>
+                  <Badge variant="secondary" className="text-xs ml-auto">{activeColumn.count}</Badge>
+                </div>
               ) : null}
             </DragOverlay>
           </DndContext>
@@ -765,15 +645,6 @@ export default function Pipeline() {
             setEditCompany(null);
             queryClient.invalidateQueries({ queryKey: getGetPipelineQueryKey(pipelineParams) });
           }}
-        />
-      )}
-
-      {selectedBoardId && (
-        <ManageStagesSheet
-          open={manageStagesOpen}
-          onOpenChange={setManageStagesOpen}
-          boardId={selectedBoardId}
-          stages={stages}
         />
       )}
 

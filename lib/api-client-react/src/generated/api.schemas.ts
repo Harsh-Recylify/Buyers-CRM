@@ -181,6 +181,7 @@ export interface Company {
   assignedManagerId?: number | null;
   /** @nullable */
   assignedManagerName?: string | null;
+  pipelineType?: string;
   stage: string;
   priority: string;
   status: string;
@@ -217,6 +218,7 @@ export interface CompanyInput {
   leadSource?: string;
   ownerId?: number;
   assignedManagerId?: number;
+  pipelineType?: string;
   stage?: string;
   priority?: string;
   expectedScrapWeight?: number;
@@ -238,6 +240,7 @@ export interface CompanyUpdate {
   leadSource?: string;
   ownerId?: number;
   assignedManagerId?: number;
+  pipelineType?: string;
   stage?: string;
   priority?: string;
   status?: string;
@@ -278,6 +281,7 @@ export interface PipelineBoard {
   name: string;
   color: string;
   isDefault: boolean;
+  pipelineType: string;
   /** @nullable */
   createdById?: number | null;
   createdAt: string;
@@ -287,6 +291,7 @@ export interface PipelineBoard {
 export interface PipelineBoardInput {
   name: string;
   color?: string;
+  pipelineType?: string;
 }
 
 export interface PipelineBoardListResponse {
@@ -1128,6 +1133,7 @@ priority?: string;
 assignedTo?: number;
 ownerId?: number;
 status?: string;
+pipelineType?: string;
 page?: number;
 limit?: number;
 sortBy?: string;

@@ -24,7 +24,7 @@ async function formatCompany(c: typeof companiesTable.$inferSelect) {
     gst: c.gst, pan: c.pan, address: c.address, state: c.state, city: c.city,
     pincode: c.pincode, leadSource: c.leadSource, ownerId: c.ownerId, ownerName,
     assignedManagerId: c.assignedManagerId, assignedManagerName,
-    stage: c.stage, priority: c.priority, status: c.status,
+    pipelineType: c.pipelineType, stage: c.stage, priority: c.priority, status: c.status,
     expectedScrapWeight: c.expectedScrapWeight ? Number(c.expectedScrapWeight) : null,
     expectedRevenue: c.expectedRevenue ? Number(c.expectedRevenue) : null,
     expectedPickupDate: c.expectedPickupDate, notes: c.notes,
@@ -44,6 +44,7 @@ router.get("/companies", requireAuth, async (req, res): Promise<void> => {
   if (q.status) conditions.push(eq(companiesTable.status, q.status) as any);
   if (q.assignedTo) conditions.push(eq(companiesTable.assignedManagerId, parseInt(q.assignedTo, 10)) as any);
   if (q.ownerId) conditions.push(eq(companiesTable.ownerId, parseInt(q.ownerId, 10)) as any);
+  if (q.pipelineType) conditions.push(eq(companiesTable.pipelineType, q.pipelineType) as any);
 
   const where = conditions.length === 1 ? conditions[0]! : and(...(conditions as any[]));
 
@@ -58,12 +59,13 @@ router.get("/companies", requireAuth, async (req, res): Promise<void> => {
 
 router.post("/companies", requireAuth, async (req, res): Promise<void> => {
   const { name, industry, website, gst, pan, address, state, city, pincode,
-    leadSource, ownerId, assignedManagerId, stage, priority,
+    leadSource, ownerId, assignedManagerId, pipelineType, stage, priority,
     expectedScrapWeight, expectedRevenue, expectedPickupDate, notes } = req.body;
   if (!name) { res.status(400).json({ error: "Company name required" }); return; }
   const [company] = await db.insert(companiesTable).values({
     name, industry, website, gst, pan, address, state, city, pincode,
     leadSource, ownerId, assignedManagerId,
+    pipelineType: pipelineType ?? "main",
     stage: stage ?? "New Lead", priority: priority ?? "medium",
     expectedScrapWeight: expectedScrapWeight?.toString(),
     expectedRevenue: expectedRevenue?.toString(),
@@ -129,11 +131,11 @@ router.get("/companies/:id", requireAuth, async (req, res): Promise<void> => {
 router.patch("/companies/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const { name, industry, website, gst, pan, address, state, city, pincode,
-    leadSource, ownerId, assignedManagerId, stage, priority, status,
+    leadSource, ownerId, assignedManagerId, pipelineType, stage, priority, status,
     expectedScrapWeight, expectedRevenue, expectedPickupDate, notes } = req.body;
   const [company] = await db.update(companiesTable).set({
     name, industry, website, gst, pan, address, state, city, pincode,
-    leadSource, ownerId, assignedManagerId, stage, priority, status,
+    leadSource, ownerId, assignedManagerId, pipelineType, stage, priority, status,
     expectedScrapWeight: expectedScrapWeight?.toString(),
     expectedRevenue: expectedRevenue?.toString(),
     expectedPickupDate, notes,

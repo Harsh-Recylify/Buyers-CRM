@@ -4,9 +4,11 @@ import {
   useGetCompany, useListActivities, useListNotes, useListTasks,
   useListContacts, useUpdateCompanyStage, useUpdateCompany,
   useCreateNote, useCreateTask, useListUsers, useListBuyers,
+  useListPipelineBoards, useListPipelineStages,
   getGetCompanyQueryKey, getListActivitiesQueryKey, getListNotesQueryKey,
   getListTasksQueryKey, getListContactsQueryKey, getListUsersQueryKey,
   getListCompaniesQueryKey, getGetPipelineQueryKey, getListBuyersQueryKey,
+  getListPipelineBoardsQueryKey, getListPipelineStagesQueryKey,
   useListCompanyBids, useCreateCompanyBid, useUpdateCompanyBid, useDeleteCompanyBid,
   getListCompanyBidsQueryKey,
   type CompanyBid, type Buyer,
@@ -28,10 +30,9 @@ import {
   Activity, Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel,
 } from "lucide-react";
 
-const STAGES = [
-  "New Lead", "Contacted", "Meeting Scheduled", "Site Inspection",
-  "Quotation Sent", "Bid Open", "Negotiation", "Approved",
-  "Pickup Scheduled", "Material Collected", "Completed", "Won", "Lost",
+const PIPELINE_TYPES = [
+  { value: "main", label: "Main Pipeline" },
+  { value: "battery", label: "Battery Pipeline" },
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -45,16 +46,8 @@ const INDIAN_STATES = [
 type CompanyEditForm = {
   name: string;
   address: string; state: string; city: string; pincode: string;
-  ownerId: string; stage: string; priority: string;
+  ownerId: string; pipelineType: string; stage: string; priority: string;
   expectedScrapWeight: string; expectedRevenue: string; expectedPickupDate: string; notes: string;
-};
-
-const STAGE_COLORS: Record<string, string> = {
-  "Won": "bg-emerald-100 text-emerald-800 border-emerald-200",
-  "Lost": "bg-gray-100 text-gray-600 border-gray-200",
-  "Negotiation": "bg-blue-100 text-blue-800 border-blue-200",
-  "Bid Open": "bg-purple-100 text-purple-800 border-purple-200",
-  "Approved": "bg-green-100 text-green-800 border-green-200",
 };
 
 function timeAgo(date: string) {
@@ -488,13 +481,25 @@ export default function CompanyDetail() {
   const { data: usersData } = useListUsers({}, { query: { queryKey: getListUsersQueryKey({}) } });
   const users = usersData?.data ?? [];
 
+  // Pipeline stages are configured centrally (Pipeline page); both boards
+  // share the same stage names, so the main board's list is the canonical
+  // source for stage dropdowns/colors here.
+  const { data: boardsData } = useListPipelineBoards({ query: { queryKey: getListPipelineBoardsQueryKey() } });
+  const mainBoard = boardsData?.data.find((b) => b.isDefault) ?? boardsData?.data[0];
+  const { data: stagesData } = useListPipelineStages(mainBoard?.id ?? 0, {
+    query: { enabled: !!mainBoard, queryKey: getListPipelineStagesQueryKey(mainBoard?.id ?? 0) },
+  });
+  const pipelineStages = stagesData?.data ?? [];
+  const stageColorMap = new Map(pipelineStages.map((s) => [s.name, s.color]));
+  const defaultStageName = pipelineStages[0]?.name ?? "";
+
   const [noteContent, setNoteContent] = React.useState("");
   const [taskTitle, setTaskTitle] = React.useState("");
   const [taskPriority, setTaskPriority] = React.useState("medium");
   const [editOpen, setEditOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState<CompanyEditForm>({
     name: "", address: "",
-    state: "", city: "", pincode: "", ownerId: "", stage: "New Lead",
+    state: "", city: "", pincode: "", ownerId: "", pipelineType: "main", stage: "",
     priority: "medium", expectedScrapWeight: "", expectedRevenue: "", expectedPickupDate: "", notes: "",
   });
 
@@ -507,7 +512,8 @@ export default function CompanyDetail() {
       city: c.city ?? "",
       pincode: c.pincode ?? "",
       ownerId: c.ownerId ? String(c.ownerId) : "",
-      stage: c.stage ?? "New Lead",
+      pipelineType: c.pipelineType ?? "main",
+      stage: c.stage ?? defaultStageName,
       priority: c.priority ?? "medium",
       expectedScrapWeight: c.expectedScrapWeight != null ? String(c.expectedScrapWeight) : "",
       expectedRevenue: c.expectedRevenue != null ? String(c.expectedRevenue) : "",
@@ -532,6 +538,7 @@ export default function CompanyDetail() {
       city: editForm.city || null,
       pincode: editForm.pincode || null,
       ownerId: editForm.ownerId ? parseInt(editForm.ownerId) : null,
+      pipelineType: editForm.pipelineType,
       stage: editForm.stage,
       priority: editForm.priority,
       expectedScrapWeight: editForm.expectedScrapWeight ? parseFloat(editForm.expectedScrapWeight) : null,
@@ -631,9 +638,19 @@ export default function CompanyDetail() {
             <h1 className="text-2xl font-bold">{c.name}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-1">
               {c.industry && <span className="text-sm text-muted-foreground">{c.industry}</span>}
-              <Badge variant="outline" className={STAGE_COLORS[c.stage] ?? "bg-purple-100 text-purple-800 border-purple-200"}>
+              <Badge
+                variant="outline"
+                style={{
+                  color: stageColorMap.get(c.stage) ?? "#6b7280",
+                  borderColor: `${stageColorMap.get(c.stage) ?? "#6b7280"}40`,
+                  background: `${stageColorMap.get(c.stage) ?? "#6b7280"}14`,
+                }}
+              >
                 {c.stage}
               </Badge>
+              {c.pipelineType === "battery" && (
+                <Badge variant="outline" className="text-amber-700 border-amber-200 bg-amber-50">Battery Pipeline</Badge>
+              )}
               <Badge variant="outline" className={c.priority === "high" ? "text-red-700 border-red-200" : c.priority === "low" ? "text-blue-700 border-blue-200" : "text-yellow-700 border-yellow-200"}>
                 {c.priority} priority
               </Badge>
@@ -649,7 +666,7 @@ export default function CompanyDetail() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {pipelineStages.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -889,10 +906,27 @@ export default function CompanyDetail() {
               </div>
 
               <div className="space-y-1.5">
+                <Label>Pipeline</Label>
+                <Select value={editForm.pipelineType} onValueChange={v => setEditForm(f => ({ ...f, pipelineType: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PIPELINE_TYPES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label>Pipeline Stage</Label>
                 <Select value={editForm.stage} onValueChange={v => setEditForm(f => ({ ...f, stage: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{STAGES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {pipelineStages.map(s => (
+                      <SelectItem key={s.id} value={s.name}>
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full inline-block" style={{ background: s.color }} />
+                          {s.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 

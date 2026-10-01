@@ -20,6 +20,7 @@ export interface CompanyInput {
   leadSource?: string;
   ownerId?: number;
   assignedManagerId?: number;
+  pipelineType?: string;
   stage?: string;
   priority?: string;
   expectedScrapWeight?: number;
