@@ -169,7 +169,14 @@ export default function Bids() {
           <SelectTrigger className="w-48 bg-white"><SelectValue placeholder="Pipeline Stage" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Stages</SelectItem>
-            {pipelineStages.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+            {pipelineStages.map(s => (
+              <SelectItem key={s.id} value={s.name}>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full inline-block" style={{ background: s.color }} />
+                  {s.name}
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={periodFilter} onValueChange={setPeriodFilter}>

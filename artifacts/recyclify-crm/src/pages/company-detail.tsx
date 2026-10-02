@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 
 const PIPELINE_TYPES = [
-  { value: "main", label: "Main Pipeline" },
-  { value: "battery", label: "Battery Pipeline" },
+  { value: "main", label: "Main Pipeline", color: "#118847" },
+  { value: "battery", label: "Battery Pipeline", color: "#f59e0b" },
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -629,7 +629,14 @@ export default function CompanyDetail() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {pipelineStages.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+              {pipelineStages.map(s => (
+                <SelectItem key={s.id} value={s.name}>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full inline-block" style={{ background: s.color }} />
+                    {s.name}
+                  </span>
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -872,7 +879,16 @@ export default function CompanyDetail() {
                 <Label>Pipeline</Label>
                 <Select value={editForm.pipelineType} onValueChange={v => setEditForm(f => ({ ...f, pipelineType: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{PIPELINE_TYPES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {PIPELINE_TYPES.map(p => (
+                      <SelectItem key={p.value} value={p.value}>
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full inline-block" style={{ background: p.color }} />
+                          {p.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 
