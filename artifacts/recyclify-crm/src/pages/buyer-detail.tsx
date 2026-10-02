@@ -52,12 +52,12 @@ export default function BuyerDetail() {
         <div className="flex items-start gap-4">
           <Avatar className="h-14 w-14 rounded-xl shrink-0">
             <AvatarFallback className="rounded-xl text-xl font-bold bg-[#118847]/10 text-[#118847]">
-              {b.name?.[0]?.toUpperCase() ?? "?"}
+              {(b.company || b.name)?.[0]?.toUpperCase() ?? "?"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold">{b.name}</h1>
-            {b.company && <p className="text-muted-foreground">{b.company}</p>}
+            <h1 className="text-2xl font-bold">{b.company || b.name}</h1>
+            {b.name && <p className="text-muted-foreground">{b.name}</p>}
           </div>
         </div>
         <Badge
