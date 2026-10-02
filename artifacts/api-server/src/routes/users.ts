@@ -23,7 +23,10 @@ function formatUser(u: typeof usersTable.$inferSelect) {
   };
 }
 
-router.get("/users", requireAuth, requireRole("admin", "super_admin"), async (req, res): Promise<void> => {
+// Any authenticated user can list the team roster — it powers the "Assigned
+// Team Member" dropdowns on Buyers/Companies/Tasks, which every role (not
+// just admins) needs to use.
+router.get("/users", requireAuth, async (req, res): Promise<void> => {
   const { page, limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const { search, role } = req.query as Record<string, string>;
 
