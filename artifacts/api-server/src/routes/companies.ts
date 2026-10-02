@@ -83,18 +83,21 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   if (rows.length === 0) { res.status(400).json({ error: "rows array is required" }); return; }
 
-  // Resolve each pipeline board's first stage so an imported company lands on
-  // a real, currently-configured stage rather than a hardcoded name that may
-  // no longer exist on that board.
+  // Resolve each pipeline board's stages (in order) so an imported company
+  // can be placed on a specific, currently-configured stage named in the
+  // spreadsheet, falling back to the first stage when none is named.
   const boards = await db.select().from(pipelineBoardsTable);
-  const firstStageByType = new Map<string, string>();
+  const stagesByType = new Map<string, string[]>();
   for (const board of boards) {
-    if (firstStageByType.has(board.pipelineType)) continue;
-    const [firstStage] = await db.select().from(pipelineStagesTable)
+    if (stagesByType.has(board.pipelineType)) continue;
+    const stages = await db.select().from(pipelineStagesTable)
       .where(eq(pipelineStagesTable.boardId, board.id))
-      .orderBy(asc(pipelineStagesTable.position))
-      .limit(1);
-    if (firstStage) firstStageByType.set(board.pipelineType, firstStage.name);
+      .orderBy(asc(pipelineStagesTable.position));
+    stagesByType.set(board.pipelineType, stages.map((s) => s.name));
+  }
+  const firstStageByType = new Map<string, string>();
+  for (const [type, stages] of stagesByType) {
+    if (stages[0]) firstStageByType.set(type, stages[0]);
   }
 
   const errors: { row: number; name: string | null; error: string }[] = [];
@@ -112,11 +115,29 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
     }
 
     let pipelineType = "main";
-    const pipelineRaw = typeof r.pipelineType === "string" ? r.pipelineType.trim().toLowerCase() : "";
+    const pipelineRawOriginal = typeof r.pipelineType === "string" ? r.pipelineType.trim() : "";
+    const pipelineRaw = pipelineRawOriginal.toLowerCase();
+    if (pipelineRaw.includes("battery")) pipelineType = "battery";
+    else if (pipelineRaw.includes("main")) pipelineType = "main";
+
+    // The cell may also (or only) name a specific stage, e.g. "Quote
+    // Submitted" or "Battery Pipeline - Invoice" — match it against the
+    // stages of the pipeline type resolved above first, then fall back to
+    // searching the other board's stages (promoting pipelineType to match)
+    // in case only a bare stage name was given for the non-default board.
+    let stage: string | null = null;
     if (pipelineRaw) {
-      if (pipelineRaw.includes("battery")) pipelineType = "battery";
-      else if (pipelineRaw.includes("main")) pipelineType = "main";
-      else errors.push({ row: rowNum, name, error: `Pipeline "${r.pipelineType}" not recognized — defaulted to Main Pipeline` });
+      stage = (stagesByType.get(pipelineType) ?? []).find((s) => pipelineRaw.includes(s.toLowerCase())) ?? null;
+      if (!stage) {
+        for (const [type, stages] of stagesByType) {
+          if (type === pipelineType) continue;
+          const match = stages.find((s) => pipelineRaw.includes(s.toLowerCase()));
+          if (match) { stage = match; pipelineType = type; break; }
+        }
+      }
+      if (!stage && !pipelineRaw.includes("battery") && !pipelineRaw.includes("main")) {
+        errors.push({ row: rowNum, name, error: `Pipeline "${pipelineRawOriginal}" not recognized — defaulted to Main Pipeline` });
+      }
     }
 
     let expectedRevenue: string | null = null;
@@ -131,7 +152,7 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
       name,
       state: typeof r.state === "string" && r.state.trim() ? r.state.trim() : null,
       pipelineType,
-      stage: firstStageByType.get(pipelineType) ?? "New Lead",
+      stage: stage ?? firstStageByType.get(pipelineType) ?? "New Lead",
       priority: "medium",
       expectedRevenue,
     });

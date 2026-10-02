@@ -715,8 +715,9 @@ export default function Companies() {
               </div>
               <p className="text-xs text-muted-foreground mt-1.5">
                 Only "Company Name" is required. "Pipeline" accepts "Main Pipeline" or "Battery Pipeline"
-                (defaults to Main if left blank or unrecognized). New companies are added to the first
-                stage of their pipeline.
+                (defaults to Main if left blank or unrecognized) and/or an exact stage name, e.g. "Quote
+                Submitted" or "Battery Pipeline - Invoice". Without a stage name, new companies are added
+                to the first stage of their pipeline.
               </p>
               <Button type="button" variant="link" size="sm" className="px-0 h-auto mt-1 gap-1" onClick={downloadTemplate}>
                 <Download className="h-3.5 w-3.5" /> Download blank template
