@@ -53,7 +53,7 @@ function CompanyEditModal({
     stage: company.stage ?? "",
     expectedRevenue: company.expectedRevenue != null ? String(company.expectedRevenue) : "",
     expectedScrapWeight: company.expectedScrapWeight != null ? String(company.expectedScrapWeight) : "",
-    expectedPickupDate: company.expectedPickupDate ?? "",
+    expectedPickupDate: company.expectedPickupDate ? company.expectedPickupDate.substring(0, 7) : "",
     notes: company.notes ?? "",
   });
 
@@ -142,7 +142,7 @@ function CompanyEditModal({
           </div>
           <div className="space-y-1">
             <Label>Expected Pickup Date</Label>
-            <Input type="date" value={form.expectedPickupDate} onChange={field("expectedPickupDate")} />
+            <Input type="month" value={form.expectedPickupDate} onChange={field("expectedPickupDate")} />
           </div>
           <div className="space-y-1">
             <Label>Notes</Label>

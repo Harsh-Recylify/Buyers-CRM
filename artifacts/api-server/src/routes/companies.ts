@@ -79,6 +79,30 @@ router.post("/companies", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(await formatCompany(company));
 });
 
+const MONTH_ABBREVS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+function toYearMonth(year: string, month: number): string | null {
+  if (month < 1 || month > 12) return null;
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+// Accepts "2026-10", "2026-10-05", "10/2026", "Oct 2026", "Oct-26" → "YYYY-MM".
+function normalizeYearMonth(raw: string): string | null {
+  const s = raw.trim().toLowerCase();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})[-/](\d{1,2})(?:[-/]\d{1,2})?$/);
+  if (m) return toYearMonth(m[1], Number(m[2]));
+  m = s.match(/^(\d{1,2})[-/](\d{4})$/);
+  if (m) return toYearMonth(m[2], Number(m[1]));
+  m = s.match(/^([a-z]{3,})\.?[\s-]+(\d{4}|\d{2})$/);
+  if (m) {
+    const idx = MONTH_ABBREVS.indexOf(m[1].slice(0, 3));
+    if (idx < 0) return null;
+    return toYearMonth(m[2].length === 2 ? `20${m[2]}` : m[2], idx + 1);
+  }
+  return null;
+}
+
 router.post("/companies/import", requireAuth, async (req, res): Promise<void> => {
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : [];
   if (rows.length === 0) { res.status(400).json({ error: "rows array is required" }); return; }
@@ -148,6 +172,13 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
       else errors.push({ row: rowNum, name, error: `Expected Target "${revenueRaw}" is not a valid number — left blank` });
     }
 
+    let expectedPickupDate: string | null = null;
+    const pickupRaw = typeof r.expectedPickupDate === "string" ? r.expectedPickupDate.trim() : "";
+    if (pickupRaw) {
+      expectedPickupDate = normalizeYearMonth(pickupRaw);
+      if (!expectedPickupDate) errors.push({ row: rowNum, name, error: `Expected Pickup "${pickupRaw}" is not a month and year (try "2026-10" or "Oct 2026") — left blank` });
+    }
+
     await db.insert(companiesTable).values({
       name,
       state: typeof r.state === "string" && r.state.trim() ? r.state.trim() : null,
@@ -155,6 +186,7 @@ router.post("/companies/import", requireAuth, async (req, res): Promise<void> =>
       stage: stage ?? firstStageByType.get(pipelineType) ?? "New Lead",
       priority: "medium",
       expectedRevenue,
+      expectedPickupDate,
     });
     imported++;
   }

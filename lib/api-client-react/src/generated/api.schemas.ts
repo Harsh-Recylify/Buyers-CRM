@@ -255,6 +255,7 @@ export interface CompanyImportRow {
   state?: string;
   pipelineType?: string;
   expectedRevenue?: string;
+  expectedPickupDate?: string;
 }
 
 export interface CompanyImportInput {

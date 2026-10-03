@@ -26,9 +26,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
-const IMPORT_COLUMNS = ["Company Name", "State", "Pipeline", "Expected Target"];
+const IMPORT_COLUMNS = ["Company Name", "State", "Pipeline", "Expected Target", "Expected Pickup"];
 
-type ImportRow = { name: string; state: string; pipelineType: string; expectedRevenue: string };
+type ImportRow = { name: string; state: string; pipelineType: string; expectedRevenue: string; expectedPickupDate: string };
 
 function normalizeHeader(h: unknown) {
   return String(h ?? "").trim().toLowerCase().replace(/[^a-z]/g, "");
@@ -43,12 +43,15 @@ const HEADER_MAP: Record<string, keyof ImportRow> = {
   expectedtarget: "expectedRevenue",
   target: "expectedRevenue",
   expectedrevenue: "expectedRevenue",
+  expectedpickup: "expectedPickupDate",
+  expectedpickupdate: "expectedPickupDate",
+  pickupdate: "expectedPickupDate",
 };
 
 function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const grid: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+  const grid: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
   if (grid.length === 0) return [];
 
   const headerRow = grid[0];
@@ -62,7 +65,7 @@ function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
   for (let r = 1; r < grid.length; r++) {
     const line = grid[r];
     if (!line || line.every((c) => String(c ?? "").trim() === "")) continue;
-    const row: ImportRow = { name: "", state: "", pipelineType: "", expectedRevenue: "" };
+    const row: ImportRow = { name: "", state: "", pipelineType: "", expectedRevenue: "", expectedPickupDate: "" };
     Object.entries(colMap).forEach(([idx, field]) => {
       row[field] = String(line[Number(idx)] ?? "").trim();
     });
@@ -74,7 +77,7 @@ function parseWorkbook(buffer: ArrayBuffer): ImportRow[] {
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
     IMPORT_COLUMNS,
-    ["Acme Corp Pvt. Ltd.", "Maharashtra", "Main Pipeline", "500000"],
+    ["Acme Corp Pvt. Ltd.", "Maharashtra", "Main Pipeline", "500000", "2026-10"],
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Companies");
@@ -288,7 +291,7 @@ export default function Companies() {
       priority: company.priority || "medium",
       expectedScrapWeight: company.expectedScrapWeight ? String(company.expectedScrapWeight) : "",
       expectedRevenue: company.expectedRevenue ? String(company.expectedRevenue) : "",
-      expectedPickupDate: company.expectedPickupDate ? company.expectedPickupDate.substring(0, 10) : "",
+      expectedPickupDate: company.expectedPickupDate ? company.expectedPickupDate.substring(0, 7) : "",
       notes: company.notes || "",
     });
     setShowModal(true);
@@ -662,8 +665,8 @@ export default function Companies() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="expectedPickupDate">Expected Pickup Date</Label>
-                <Input id="expectedPickupDate" type="date" value={form.expectedPickupDate} onChange={setInput("expectedPickupDate")} />
+                <Label htmlFor="expectedPickupDate">Expected Pickup (Month & Year)</Label>
+                <Input id="expectedPickupDate" type="month" value={form.expectedPickupDate} onChange={setInput("expectedPickupDate")} />
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
@@ -730,6 +733,7 @@ export default function Companies() {
                       <TableCell className="text-muted-foreground">Maharashtra</TableCell>
                       <TableCell className="text-muted-foreground">Main Pipeline</TableCell>
                       <TableCell className="text-muted-foreground">500000</TableCell>
+                      <TableCell className="text-muted-foreground">2026-10</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -738,7 +742,8 @@ export default function Companies() {
                 Only "Company Name" is required. "Pipeline" accepts "Main Pipeline" or "Battery Pipeline"
                 (defaults to Main if left blank or unrecognized) and/or an exact stage name, e.g. "Quote
                 Submitted" or "Battery Pipeline - Invoice". Without a stage name, new companies are added
-                to the first stage of their pipeline.
+                to the first stage of their pipeline. "Expected Pickup" takes a month and year, e.g.
+                "2026-10", "Oct 2026" or "10/2026".
               </p>
               <Button type="button" variant="link" size="sm" className="px-0 h-auto mt-1 gap-1" onClick={downloadTemplate}>
                 <Download className="h-3.5 w-3.5" /> Download blank template

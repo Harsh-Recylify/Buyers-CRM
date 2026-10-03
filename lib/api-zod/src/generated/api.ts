@@ -362,7 +362,8 @@ export const ImportCompaniesBody = zod.object({
   "name": zod.string().optional(),
   "state": zod.string().optional(),
   "pipelineType": zod.string().optional(),
-  "expectedRevenue": zod.string().optional()
+  "expectedRevenue": zod.string().optional(),
+  "expectedPickupDate": zod.string().optional()
 }))
 })
 

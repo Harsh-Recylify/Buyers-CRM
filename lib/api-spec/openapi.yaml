@@ -2418,6 +2418,8 @@ components:
           type: string
         expectedRevenue:
           type: string
+        expectedPickupDate:
+          type: string
 
     CompanyImportInput:
       type: object

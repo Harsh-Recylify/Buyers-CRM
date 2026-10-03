@@ -480,7 +480,7 @@ export default function CompanyDetail() {
       priority: c.priority ?? "medium",
       expectedScrapWeight: c.expectedScrapWeight != null ? String(c.expectedScrapWeight) : "",
       expectedRevenue: c.expectedRevenue != null ? String(c.expectedRevenue) : "",
-      expectedPickupDate: c.expectedPickupDate ? c.expectedPickupDate.substring(0, 10) : "",
+      expectedPickupDate: c.expectedPickupDate ? c.expectedPickupDate.substring(0, 7) : "",
       notes: c.notes ?? "",
     });
     setEditOpen(true);
@@ -941,7 +941,7 @@ export default function CompanyDetail() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Expected Pickup Date</Label>
-                    <Input type="date" value={editForm.expectedPickupDate} onChange={setEF("expectedPickupDate")} />
+                    <Input type="month" value={editForm.expectedPickupDate} onChange={setEF("expectedPickupDate")} />
                   </div>
                 </div>
               </div>
