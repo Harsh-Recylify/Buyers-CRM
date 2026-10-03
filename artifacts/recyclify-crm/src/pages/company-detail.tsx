@@ -1,11 +1,11 @@
 import React from "react";
 import { useParams, Link } from "wouter";
 import {
-  useGetCompany, useListActivities, useListNotes, useListTasks,
+  useGetCompany, useListNotes, useListTasks,
   useListContacts, useUpdateCompanyStage, useUpdateCompany,
   useCreateNote, useCreateTask, useListUsers, useListBuyers,
   useListPipelineBoards, useListPipelineStages,
-  getGetCompanyQueryKey, getListActivitiesQueryKey, getListNotesQueryKey,
+  getGetCompanyQueryKey, getListNotesQueryKey,
   getListTasksQueryKey, getListContactsQueryKey, getListUsersQueryKey,
   getListCompaniesQueryKey, getGetPipelineQueryKey, getListBuyersQueryKey,
   getListPipelineBoardsQueryKey, getListPipelineStagesQueryKey,
@@ -29,7 +29,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Building2, MapPin, Globe, Tag, Calendar, CheckSquare,
-  Activity, Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel, Check, ChevronsUpDown,
+  Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel, Check, ChevronsUpDown,
 } from "lucide-react";
 
 const PIPELINE_TYPES = [
@@ -442,10 +442,6 @@ export default function CompanyDetail() {
     query: { enabled: !!id && !isNaN(id), queryKey: getGetCompanyQueryKey(id) }
   });
 
-  const { data: activitiesData } = useListActivities(
-    { entityType: "company", entityId: id },
-    { query: { enabled: !!id, queryKey: getListActivitiesQueryKey({ entityType: "company", entityId: id }) } }
-  );
 
   const { data: notesData } = useListNotes(
     { entityType: "company", entityId: id },
@@ -602,7 +598,6 @@ export default function CompanyDetail() {
   }
 
   const c = company as any;
-  const activities = activitiesData?.data ?? [];
   const notes = Array.isArray(notesData) ? notesData : (notesData as any)?.data ?? [];
   const tasks = tasksData?.data ?? [];
   const contactsList = Array.isArray(contacts) ? contacts : (contacts as any)?.data ?? [];
@@ -686,7 +681,6 @@ export default function CompanyDetail() {
         <TabsList className="bg-gray-100/80 flex-wrap h-auto gap-1">
           <TabsTrigger value="bids">Bid Comparison</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="activities">Timeline</TabsTrigger>
           <TabsTrigger value="notes">Notes ({notes.length})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({contactsList.length})</TabsTrigger>
@@ -730,33 +724,6 @@ export default function CompanyDetail() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="activities" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              {activities.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Activity className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-muted-foreground">No activities yet</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {activities.map((a: any) => (
-                    <div key={a.id} className="flex gap-3 p-4 hover:bg-gray-50/50 transition-colors">
-                      <div className="h-7 w-7 rounded-full bg-[#118847]/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <Activity className="h-3.5 w-3.5 text-[#118847]" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{a.description}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{timeAgo(a.createdAt)}{a.userName ? ` · ${a.userName}` : ""}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="notes" className="mt-4 space-y-4">

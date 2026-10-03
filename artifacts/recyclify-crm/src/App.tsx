@@ -23,7 +23,6 @@ import Bids from "@/pages/bids";
 import BidDetail from "@/pages/bid-detail";
 import Tasks from "@/pages/tasks";
 import Calendar from "@/pages/calendar";
-import Activities from "@/pages/activities";
 import Reports from "@/pages/reports";
 import Notifications from "@/pages/notifications";
 import Admin from "@/pages/admin";
@@ -65,7 +64,6 @@ function Router() {
       <ProtectedRoute path="/bids" component={() => <Layout><Bids /></Layout>} />
       <ProtectedRoute path="/tasks" component={() => <Layout><Tasks /></Layout>} />
       <ProtectedRoute path="/calendar" component={() => <Layout><Calendar /></Layout>} />
-      <ProtectedRoute path="/activities" component={() => <Layout><Activities /></Layout>} />
       <ProtectedRoute path="/reports" component={() => <Layout><Reports /></Layout>} />
       <ProtectedRoute path="/notifications" component={() => <Layout><Notifications /></Layout>} />
       <ProtectedRoute path="/admin" component={() => <Layout><Admin /></Layout>} />

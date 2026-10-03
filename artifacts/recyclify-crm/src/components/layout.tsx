@@ -12,7 +12,6 @@ import {
   Gavel,
   CheckSquare,
   CalendarDays,
-  Activity,
   BarChart3,
   Bell,
   ShieldAlert,
@@ -39,7 +38,6 @@ const navItems = [
   { name: "Buyer Directory", href: "/buyers", icon: Users },
   { name: "Tasks", href: "/tasks", icon: CheckSquare },
   { name: "Calendar", href: "/calendar", icon: CalendarDays },
-  { name: "Activities", href: "/activities", icon: Activity },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Notifications", href: "/notifications", icon: Bell },
 ];
