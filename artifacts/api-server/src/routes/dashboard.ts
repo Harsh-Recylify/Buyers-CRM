@@ -28,7 +28,8 @@ router.get("/dashboard/stats", requireAuth, async (req, res): Promise<void> => {
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage NOT IN ('Vendor Closed', 'Quote Lost')) AS active_deals,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Vendor Closed') AS won_deals,
       (SELECT COUNT(*) FROM companies WHERE deleted_at IS NULL AND stage = 'Quote Lost') AS lost_deals,
-      (SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'open') AS open_deals,
+      ((SELECT COUNT(*) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status IN ('open', 'negotiation'))
+        + (SELECT COUNT(*) FROM company_bids cb JOIN companies c ON c.id = cb.company_id AND c.deleted_at IS NULL WHERE cb.status = 'pending')) AS open_deals,
       (SELECT COALESCE(SUM(CAST(b.winning_amount AS numeric)), 0) FROM bids b JOIN companies c ON c.id = b.company_id AND c.deleted_at IS NULL WHERE b.status = 'awarded') AS total_revenue,
       (SELECT COALESCE(SUM(CAST(expected_revenue AS numeric)), 0) FROM companies WHERE deleted_at IS NULL) AS expected_revenue
   `)).rows as any[];
