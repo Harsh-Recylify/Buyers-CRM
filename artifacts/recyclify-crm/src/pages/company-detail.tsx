@@ -24,10 +24,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Building2, MapPin, Globe, Tag, Calendar, CheckSquare,
-  Activity, Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel,
+  Activity, Users, Plus, Pencil, Trash2, Trophy, TrendingDown, Gavel, Check, ChevronsUpDown,
 } from "lucide-react";
 
 const PIPELINE_TYPES = [
@@ -92,6 +94,7 @@ function BidFormModal({
   buyers: Buyer[];
 }) {
   const [form, setForm] = React.useState<BidFormData>({ ...EMPTY_FORM, ...initialValues });
+  const [buyerPickerOpen, setBuyerPickerOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (open) setForm({ ...EMPTY_FORM, ...initialValues });
@@ -119,25 +122,47 @@ function BidFormModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <Label>Buyer <span className="text-red-500">*</span></Label>
-              <Select
-                value={form.buyerId}
-                onValueChange={v => {
-                  const buyer = buyers.find(b => String(b.id) === v);
-                  setForm(f => ({
-                    ...f,
-                    buyerId: v,
-                    contactPerson: buyer?.name ?? f.contactPerson,
-                    mobile: buyer?.phone ?? f.mobile,
-                  }));
-                }}
-              >
-                <SelectTrigger><SelectValue placeholder="Select a buyer" /></SelectTrigger>
-                <SelectContent>
-                  {buyers.map(b => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.company || b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={buyerPickerOpen} onOpenChange={setBuyerPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={buyerPickerOpen} className="w-full justify-between font-normal">
+                    <span className={selectedBuyer ? "" : "text-muted-foreground"}>
+                      {selectedBuyer ? (selectedBuyer.company || selectedBuyer.name) : "Select a buyer"}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search buyers by company or name..." />
+                    <CommandList>
+                      <CommandEmpty>No buyer found.</CommandEmpty>
+                      <CommandGroup>
+                        {buyers.map(b => (
+                          <CommandItem
+                            key={b.id}
+                            value={`${b.company ?? ""} ${b.name} ${b.phone ?? ""}`}
+                            onSelect={() => {
+                              setForm(f => ({
+                                ...f,
+                                buyerId: String(b.id),
+                                contactPerson: b.name ?? f.contactPerson,
+                                mobile: b.phone ?? f.mobile,
+                              }));
+                              setBuyerPickerOpen(false);
+                            }}
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${String(b.id) === form.buyerId ? "opacity-100" : "opacity-0"}`} />
+                            <div className="flex flex-col">
+                              <span>{b.company || b.name}</span>
+                              {b.company && <span className="text-xs text-muted-foreground">{b.name}</span>}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {selectedBuyer && (
                 <p className="text-xs text-muted-foreground pt-0.5">
                   {selectedBuyer.assignedToName ? `Team member: ${selectedBuyer.assignedToName}` : "No team member assigned"}
@@ -183,7 +208,7 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
     query: { enabled: !!companyId, queryKey: bidsKey },
   });
   const buyersKey = getListBuyersQueryKey({ status: "active", limit: 500 });
-  const { data: buyersData } = useListBuyers({ status: "active", limit: 500 }, { query: { queryKey: buyersKey } });
+  const { data: buyersData } = useListBuyers({ status: "active", limit: 100 }, { query: { queryKey: buyersKey } });
   const buyers = buyersData?.data ?? [];
   const createBid = useCreateCompanyBid();
   const updateBid = useUpdateCompanyBid();
