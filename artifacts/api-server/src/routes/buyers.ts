@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, buyersTable, usersTable, bidQuotesTable, bidsTable, companyBidsTable } from "@workspace/db";
-import { eq, ilike, and, count, desc } from "drizzle-orm";
+import { eq, ilike, and, or, count, desc } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
 import { logActivity } from "../lib/activity";
@@ -31,7 +31,7 @@ router.get("/buyers", requireAuth, async (req, res): Promise<void> => {
   const q = req.query as Record<string, string>;
 
   let conditions: any[] = [];
-  if (q.search) conditions.push(ilike(buyersTable.name, `%${q.search}%`));
+  if (q.search) conditions.push(or(ilike(buyersTable.name, `%${q.search}%`), ilike(buyersTable.company, `%${q.search}%`)));
   if (q.status) conditions.push(eq(buyersTable.status, q.status));
   if (q.state) conditions.push(eq(buyersTable.state, q.state));
   if (q.buyerType) conditions.push(eq(buyersTable.buyerType, q.buyerType));

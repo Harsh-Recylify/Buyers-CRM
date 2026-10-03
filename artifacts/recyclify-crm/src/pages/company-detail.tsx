@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -122,19 +121,23 @@ function BidFormModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 space-y-1">
               <Label>Buyer <span className="text-red-500">*</span></Label>
-              <Popover open={buyerPickerOpen} onOpenChange={setBuyerPickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" role="combobox" aria-expanded={buyerPickerOpen} className="w-full justify-between font-normal">
-                    <span className={selectedBuyer ? "" : "text-muted-foreground"}>
-                      {selectedBuyer ? (selectedBuyer.company || selectedBuyer.name) : "Select a buyer"}
-                    </span>
-                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Button
+                type="button"
+                variant="outline"
+                aria-expanded={buyerPickerOpen}
+                className="w-full justify-between font-normal"
+                onClick={() => setBuyerPickerOpen(o => !o)}
+              >
+                <span className={selectedBuyer ? "" : "text-muted-foreground"}>
+                  {selectedBuyer ? (selectedBuyer.company || selectedBuyer.name) : "Select a buyer"}
+                </span>
+                <ChevronsUpDown className="h-4 w-4 opacity-50" />
+              </Button>
+              {buyerPickerOpen && (
+                <div className="rounded-md border bg-white">
                   <Command>
-                    <CommandInput placeholder="Search buyers by company or name..." />
-                    <CommandList>
+                    <CommandInput placeholder="Search buyers by company, name or phone..." />
+                    <CommandList className="max-h-56">
                       <CommandEmpty>No buyer found.</CommandEmpty>
                       <CommandGroup>
                         {buyers.map(b => (
@@ -161,8 +164,8 @@ function BidFormModal({
                       </CommandGroup>
                     </CommandList>
                   </Command>
-                </PopoverContent>
-              </Popover>
+                </div>
+              )}
               {selectedBuyer && (
                 <p className="text-xs text-muted-foreground pt-0.5">
                   {selectedBuyer.assignedToName ? `Team member: ${selectedBuyer.assignedToName}` : "No team member assigned"}
@@ -207,8 +210,8 @@ function BidComparisonSection({ companyId }: { companyId: number }) {
   const { data: bidsData, isLoading } = useListCompanyBids(companyId, {
     query: { enabled: !!companyId, queryKey: bidsKey },
   });
-  const buyersKey = getListBuyersQueryKey({ status: "active", limit: 500 });
-  const { data: buyersData } = useListBuyers({ status: "active", limit: 100 }, { query: { queryKey: buyersKey } });
+  const buyersParams = { status: "active", limit: 100 };
+  const { data: buyersData } = useListBuyers(buyersParams, { query: { queryKey: getListBuyersQueryKey(buyersParams) } });
   const buyers = buyersData?.data ?? [];
   const createBid = useCreateCompanyBid();
   const updateBid = useUpdateCompanyBid();
