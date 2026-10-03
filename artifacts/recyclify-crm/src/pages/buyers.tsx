@@ -82,15 +82,13 @@ function downloadTemplate() {
 }
 
 type BuyerFormData = {
-  name: string; company: string; phone: string; email: string;
-  gst: string; address: string; state: string; city: string;
+  name: string; company: string; phone: string; state: string;
   materialCategories: string; preferredMaterials: string;
   pickupStates: string[]; buyerType: string; assignedToId: string; notes: string;
 };
 
 const emptyForm = (): BuyerFormData => ({
-  name: "", company: "", phone: "", email: "", gst: "",
-  address: "", state: "", city: "", materialCategories: "",
+  name: "", company: "", phone: "", state: "", materialCategories: "",
   preferredMaterials: "", pickupStates: [], buyerType: "", assignedToId: "", notes: "",
 });
 
@@ -235,9 +233,7 @@ export default function Buyers() {
     setEditingId(buyer.id);
     setForm({
       name: buyer.name || "", company: buyer.company || "",
-      phone: buyer.phone || "", email: buyer.email || "",
-      gst: buyer.gst || "",
-      address: buyer.address || "", state: buyer.state || "", city: buyer.city || "",
+      phone: buyer.phone || "", state: buyer.state || "",
       materialCategories: (buyer.materialCategories || []).join(", "),
       preferredMaterials: buyer.preferredMaterials || "",
       pickupStates: buyer.pickupStates || [],
@@ -257,11 +253,7 @@ export default function Buyers() {
       name: form.name.trim(),
       ...(form.company && { company: form.company }),
       ...(form.phone && { phone: form.phone }),
-      ...(form.email && { email: form.email }),
-      ...(form.gst && { gst: form.gst }),
-      ...(form.address && { address: form.address }),
       ...(form.state && { state: form.state }),
-      ...(form.city && { city: form.city }),
       materialCategories: form.materialCategories.split(",").map((s) => s.trim()).filter(Boolean),
       ...(form.preferredMaterials && { preferredMaterials: form.preferredMaterials }),
       pickupStates: form.pickupStates,
@@ -445,14 +437,6 @@ export default function Buyers() {
                 <Input id="b-phone" placeholder="+91 98765 43210" value={form.phone} onChange={setInput("phone")} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="b-email">Email</Label>
-                <Input id="b-email" type="email" placeholder="buyer@example.com" value={form.email} onChange={setInput("email")} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="b-gst">GST Number</Label>
-                <Input id="b-gst" placeholder="22AAAAA0000A1Z5" value={form.gst} onChange={setInput("gst")} />
-              </div>
-              <div className="space-y-1.5">
                 <Label>Buyer Type</Label>
                 <Select value={form.buyerType} onValueChange={set("buyerType")}>
                   <SelectTrigger><SelectValue placeholder="Select buyer type" /></SelectTrigger>
@@ -461,17 +445,9 @@ export default function Buyers() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="b-address">Address</Label>
-                <Input id="b-address" placeholder="Street address" value={form.address} onChange={setInput("address")} />
-              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="b-state">State</Label>
                 <Input id="b-state" placeholder="Maharashtra" value={form.state} onChange={setInput("state")} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="b-city">City</Label>
-                <Input id="b-city" placeholder="Mumbai" value={form.city} onChange={setInput("city")} />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="b-materials">Material Categories</Label>
