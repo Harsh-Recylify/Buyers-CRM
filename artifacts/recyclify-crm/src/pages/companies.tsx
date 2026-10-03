@@ -90,13 +90,6 @@ const PIPELINE_TYPES = [
 ];
 
 const PRIORITIES = ["low", "medium", "high", "urgent"];
-const INDIAN_STATES = [
-  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana",
-  "Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur",
-  "Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
-  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Chandigarh","Other",
-];
-
 type CompanyFormData = {
   name: string;
   state: string;
@@ -601,13 +594,8 @@ export default function Companies() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>State</Label>
-                <Select value={form.state} onValueChange={set("state")}>
-                  <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                  <SelectContent>
-                    {INDIAN_STATES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="company-state">State</Label>
+                <Input id="company-state" placeholder="Maharashtra" value={form.state} onChange={setInput("state")} />
               </div>
 
               <div className="space-y-1.5">
