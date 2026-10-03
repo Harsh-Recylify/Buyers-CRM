@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, companiesTable, usersTable, pipelineBoardsTable, pipelineStagesTable } from "@workspace/db";
-import { eq, ilike, or, count, and, isNull, desc, asc } from "drizzle-orm";
+import { db, companiesTable, usersTable, pipelineBoardsTable, pipelineStagesTable, bidsTable, companyBidsTable } from "@workspace/db";
+import { eq, ilike, or, count, and, isNull, desc, asc, inArray } from "drizzle-orm";
 import { requireAuth } from "../lib/auth";
 import { parsePagination, buildMeta } from "../lib/pagination";
 import { logActivity, logAudit } from "../lib/activity";
@@ -53,7 +53,19 @@ router.get("/companies", requireAuth, async (req, res): Promise<void> => {
     db.select({ count: count() }).from(companiesTable).where(where as any),
   ]);
 
-  const data = await Promise.all(rows.map(formatCompany));
+  const liveBidCounts = new Map<number, number>();
+  if (rows.length) {
+    const ids = rows.map(r => r.id);
+    const [companyBidRows, bidRows] = await Promise.all([
+      db.select({ companyId: companyBidsTable.companyId }).from(companyBidsTable).where(inArray(companyBidsTable.companyId, ids)),
+      db.select({ companyId: bidsTable.companyId }).from(bidsTable).where(inArray(bidsTable.companyId, ids)),
+    ]);
+    for (const b of [...companyBidRows, ...bidRows]) {
+      liveBidCounts.set(b.companyId, (liveBidCounts.get(b.companyId) ?? 0) + 1);
+    }
+  }
+
+  const data = await Promise.all(rows.map(async r => ({ ...(await formatCompany(r)), liveBids: liveBidCounts.get(r.id) ?? 0 })));
   res.json({ data, meta: buildMeta(Number(total), page, limit) });
 });
 

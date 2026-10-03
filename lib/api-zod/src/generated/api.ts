@@ -290,6 +290,7 @@ export const ListCompaniesResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })),
@@ -352,6 +353,7 @@ export const CreateCompanyResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -407,6 +409,7 @@ export const GetCompanyResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -464,6 +467,7 @@ export const UpdateCompanyResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -509,6 +513,7 @@ export const UpdateCompanyStageResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -543,6 +548,7 @@ export const RestoreCompanyResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })
@@ -731,6 +737,7 @@ export const GetPipelineResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 }))
@@ -2110,6 +2117,7 @@ export const GetDashboardRecentResponse = zod.object({
   "expectedPickupDate": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "deletedAt": zod.string().nullish(),
+  "liveBids": zod.number().optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string().optional()
 })),

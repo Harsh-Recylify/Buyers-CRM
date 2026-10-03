@@ -195,6 +195,7 @@ export interface Company {
   notes?: string | null;
   /** @nullable */
   deletedAt?: string | null;
+  liveBids?: number;
   createdAt: string;
   updatedAt?: string;
 }

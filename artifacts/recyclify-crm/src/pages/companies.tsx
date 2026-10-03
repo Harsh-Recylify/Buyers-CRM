@@ -476,6 +476,7 @@ export default function Companies() {
                 <TableHead>Stage</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Expected Revenue</TableHead>
+                <TableHead>Live Bids</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -487,12 +488,13 @@ export default function Companies() {
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-10" /></TableCell>
                     <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : data?.data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                     <div className="flex flex-col items-center justify-center">
                       <Building2 className="h-12 w-12 text-gray-300 mb-4" />
                       <p className="text-lg font-medium text-gray-900">No companies found</p>
@@ -530,6 +532,13 @@ export default function Companies() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {company.expectedRevenue ? `₹${company.expectedRevenue.toLocaleString("en-IN")}` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {company.liveBids ? (
+                        <Badge variant="outline" className="font-medium text-[#118847] border-[#118847]/30 bg-[#118847]/5">{company.liveBids}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">0</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

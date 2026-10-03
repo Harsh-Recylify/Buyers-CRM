@@ -2303,6 +2303,8 @@ components:
           type: ["string", "null"]
         deletedAt:
           type: ["string", "null"]
+        liveBids:
+          type: integer
         createdAt:
           type: string
         updatedAt:
